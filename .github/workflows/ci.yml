@@ -21,9 +21,17 @@ jobs:
           test -f CONTRACT.md
           test -f state/mesh.json
 
-      - name: Validate JSON (state + schemas)
+      - name: Validate JSON parse (state + schemas + examples)
         run: |
           python3 -m json.tool state/mesh.json >/dev/null
-          for f in schemas/*.json; do
-            python3 -m json.tool "$f" >/dev/null
-          done
+          for f in schemas/*.json; do python3 -m json.tool "$f" >/dev/null; done
+          for f in projects/decision.forum/examples/*.json; do python3 -m json.tool "$f" >/dev/null; done
+
+      - name: Install jsonschema
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install jsonschema
+
+      - name: Validate examples against schemas
+        run: |
+          python3 tools/validate-schemas.py
