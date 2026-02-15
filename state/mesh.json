@@ -1,5 +1,15 @@
 {
   "meshcoreVersion": "0.1.0",
   "updatedAt": "2026-02-15T17:56:41Z",
-  "projects": []
+  "projects": [
+    {
+      "name": "decision.forum",
+      "domain": "decision.forum",
+      "kind": "protocol",
+      "status": "draft",
+      "links": [
+        "/docs/decision-forum-whitepaper-draft-v0.1-2026-02-15.md"
+      ]
+    }
+  ]
 }
