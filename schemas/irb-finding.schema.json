@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeshCORE AI-IRB Finding",
+  "type": "object",
+  "required": ["id", "caseId", "createdAt", "crosscheckReportId", "converged"],
+  "properties": {
+    "id": {"type": "string"},
+    "caseId": {"type": "string"},
+    "createdAt": {"type": "string"},
+    "crosscheckReportId": {"type": "string"},
+    "converged": {"type": "boolean"},
+    "summary": {"type": "string"},
+    "dissent": {"type": "string"},
+    "recommendation": {"type": "string"}
+  },
+  "additionalProperties": true
+}

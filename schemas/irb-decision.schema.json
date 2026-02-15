@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeshCORE AI-IRB Decision",
+  "type": "object",
+  "required": ["id", "caseId", "issuedAt", "ruling"],
+  "properties": {
+    "id": {"type": "string"},
+    "caseId": {"type": "string"},
+    "issuedAt": {"type": "string"},
+    "ruling": {"type": "string", "enum": ["APPROVE", "REJECT", "REQUEST_CHANGES"]},
+    "rationale": {"type": "string"},
+    "decisionRecordId": {"type": "string"},
+    "clearanceCertificateId": {"type": "string"}
+  },
+  "additionalProperties": true
+}
