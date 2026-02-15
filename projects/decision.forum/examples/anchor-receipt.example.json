@@ -1,0 +1,7 @@
+{
+  "chain": "exochain",
+  "anchored_at": "2026-02-15T12:01:00Z",
+  "record_hash": "deadbeef...sha256",
+  "txid": "0xabc123...",
+  "metadata": { "network": "testnet", "confirmations": 12 }
+}

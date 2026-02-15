@@ -1,0 +1,17 @@
+{
+  "id": "CC-acde12ff90",
+  "issued_at": "2026-02-15T12:00:00Z",
+  "record_id": "DR-2026-02-15-acde12",
+  "record_hash": "deadbeef...sha256",
+  "policy": {
+    "mode": "quorum",
+    "quorum": 2,
+    "allowed_roles": ["reviewer", "steward"],
+    "require_valid_signatures": false,
+    "reject_veto": true
+  },
+  "approvals": ["did:example:reviewer1", "did:example:reviewer2"],
+  "rejects": [],
+  "abstains": [],
+  "cleared": true
+}

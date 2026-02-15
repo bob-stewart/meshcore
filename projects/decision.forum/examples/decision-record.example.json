@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.2",
+  "id": "DR-2026-02-15-acde12",
+  "title": "Adopt decision.forum clearance for model policy changes",
+  "status": "draft",
+  "forum": { "name": "decision.forum", "scope": "local" },
+  "context": "Model changes create governance risk without custody.",
+  "decision": "Require cleared DecisionRecord for any change to UPK model_policy.",
+  "consequences": "Slight friction upfront; major clarity during audits and incidents.",
+  "assumptions": ["We can route changes through a blessed CLI path."],
+  "options_considered": ["Manual reviews only", "Central approvals without artifacts"],
+  "evidence": [
+    {
+      "kind": "doc",
+      "description": "decision.forum working draft",
+      "uri": "docs/decision-forum-whitepaper-draft-v0.1-2026-02-15.md",
+      "content_hash": null,
+      "metadata": {}
+    }
+  ],
+  "crosschecks": [],
+  "custody": [],
+  "anchors": [],
+  "tags": ["governance", "model-policy"]
+}

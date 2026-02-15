@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-1a2b3c4d5e",
+  "created_by": "did:example:crosschecked",
+  "question": "Should model-policy changes require forum clearance?",
+  "method": "adversarial",
+  "inputs": ["DR-2026-02-15-acde12"],
+  "opinions": [
+    {
+      "agent_id": "did:example:redteam",
+      "agent_kind": "ai",
+      "agent_label": "Red Team",
+      "model": "gpt-5.2",
+      "policy_id": "redteam_v1",
+      "stance": "support",
+      "summary": "Yes; model drift is a governance risk.",
+      "confidence": 0.78,
+      "risks": ["Overhead if quorum is too high"]
+    },
+    {
+      "agent_id": "did:example:ops",
+      "agent_kind": "human",
+      "agent_label": "Ops Lead",
+      "stance": "amend",
+      "summary": "Require clearance only for production; allow sandbox changes.",
+      "confidence": 0.65,
+      "risks": ["Shadow deployments if sandbox becomes production-like"]
+    }
+  ],
+  "synthesis": "Require clearance for production; keep a low-friction path for sandbox with explicit labeling.",
+  "dissent": "If the org is small, quorum may slow urgent mitigations; allow emergency clear with later review.",
+  "dissenters": ["did:example:ops"],
+  "metadata": {}
+}
