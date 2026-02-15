@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum EvidenceItem",
+  "type": "object",
+  "required": ["kind", "description"],
+  "properties": {
+    "kind": {"type": "string"},
+    "description": {"type": "string"},
+    "uri": {"type": "string"},
+    "content_hash": {"type": ["string", "null"]},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum DecisionRecord",
+  "type": "object",
+  "required": ["schema_version", "id", "title", "status", "context", "decision", "consequences"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "id": {"type": "string"},
+    "title": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["draft", "rfc", "accepted", "rejected", "superseded", "deprecated"]
+    },
+    "forum": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "scope": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "context": {"type": "string"},
+    "decision": {"type": "string"},
+    "consequences": {"type": "string"},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "options_considered": {"type": "array", "items": {"type": "string"}},
+    "evidence": {"type": "array", "items": {"$ref": "./evidence-item.schema.json"}},
+    "crosschecks": {"type": "array", "items": {"type": "string"}},
+    "custody": {"type": "array", "items": {"$ref": "./custody-event.schema.json"}},
+    "anchors": {"type": "array", "items": {"$ref": "./anchor-receipt.schema.json"}},
+    "record_hash": {"type": "string"},
+    "tags": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

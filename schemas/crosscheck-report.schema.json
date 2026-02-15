@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum CrosscheckReport",
+  "type": "object",
+  "required": ["schema_version", "id", "question", "method", "opinions", "synthesis"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "id": {"type": "string"},
+    "created_by": {"type": "string"},
+    "question": {"type": "string"},
+    "method": {"type": "string"},
+    "inputs": {"type": "array", "items": {"type": "string"}},
+    "opinions": {
+      "type": "array",
+      "items": {"$ref": "./crosscheck-opinion.schema.json"}
+    },
+    "synthesis": {"type": "string"},
+    "dissent": {"type": "string"},
+    "dissenters": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}

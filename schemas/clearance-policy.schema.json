@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum ClearancePolicy",
+  "type": "object",
+  "required": ["mode"],
+  "properties": {
+    "mode": {"type": "string", "enum": ["quorum", "single"]},
+    "quorum": {"type": "integer", "minimum": 1},
+    "allowed_roles": {"type": "array", "items": {"type": "string"}},
+    "require_valid_signatures": {"type": "boolean"},
+    "reject_veto": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

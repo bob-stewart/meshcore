@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum ClearanceCertificate",
+  "type": "object",
+  "required": ["id", "issued_at", "record_id", "record_hash", "policy", "cleared"],
+  "properties": {
+    "id": {"type": "string"},
+    "issued_at": {"type": "string"},
+    "record_id": {"type": "string"},
+    "record_hash": {"type": "string"},
+    "policy": {"$ref": "./clearance-policy.schema.json"},
+    "approvals": {"type": "array", "items": {"type": "string"}},
+    "rejects": {"type": "array", "items": {"type": "string"}},
+    "abstains": {"type": "array", "items": {"type": "string"}},
+    "cleared": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

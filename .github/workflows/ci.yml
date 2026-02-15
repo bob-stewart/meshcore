@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Basic repo sanity
         run: |
           test -f LICENSE
@@ -19,9 +20,10 @@ jobs:
           test -f TRADEMARKS.md
           test -f CONTRACT.md
           test -f state/mesh.json
-      - name: Validate JSON (schemas + state)
+
+      - name: Validate JSON (state + schemas)
         run: |
           python3 -m json.tool state/mesh.json >/dev/null
-          python3 -m json.tool schemas/decision.schema.json >/dev/null
-          python3 -m json.tool schemas/state.schema.json >/dev/null
-          python3 -m json.tool schemas/evidence.schema.json >/dev/null
+          for f in schemas/*.json; do
+            python3 -m json.tool "$f" >/dev/null
+          done

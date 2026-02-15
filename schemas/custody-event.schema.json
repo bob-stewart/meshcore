@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum CustodyEvent",
+  "type": "object",
+  "required": ["actor_id", "action", "time"],
+  "properties": {
+    "actor_id": {"type": "string"},
+    "role": {"type": "string"},
+    "action": {"type": "string"},
+    "time": {"type": "string"},
+    "record_hash": {"type": "string"},
+    "signature": {"type": "string"},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}

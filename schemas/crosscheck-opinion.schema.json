@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum Crosscheck Opinion",
+  "type": "object",
+  "required": ["agent_id", "agent_kind", "stance", "summary"],
+  "properties": {
+    "agent_id": {"type": "string"},
+    "agent_kind": {"type": "string", "enum": ["ai", "human", "hybrid"]},
+    "agent_label": {"type": "string"},
+    "model": {"type": "string"},
+    "policy_id": {"type": "string"},
+    "stance": {"type": "string"},
+    "summary": {"type": "string"},
+    "confidence": {"type": "number"},
+    "risks": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

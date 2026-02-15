@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "decision.forum AnchorReceipt",
+  "type": "object",
+  "required": ["chain", "anchored_at", "record_hash"],
+  "properties": {
+    "chain": {"type": "string"},
+    "anchored_at": {"type": "string"},
+    "record_hash": {"type": "string"},
+    "txid": {"type": "string"},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}
