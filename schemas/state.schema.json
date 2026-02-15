@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeshCORE State",
+  "type": "object",
+  "required": ["meshcoreVersion", "projects"],
+  "properties": {
+    "meshcoreVersion": {"type": "string"},
+    "updatedAt": {"type": "string"},
+    "projects": {"type": "array"}
+  }
+}

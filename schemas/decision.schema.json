@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeshCORE Decision",
+  "type": "object",
+  "required": ["id", "date", "summary"],
+  "properties": {
+    "id": {"type": "string"},
+    "date": {"type": "string"},
+    "summary": {"type": "string"},
+    "rationale": {"type": "string"},
+    "links": {"type": "array", "items": {"type": "string"}}
+  }
+}
