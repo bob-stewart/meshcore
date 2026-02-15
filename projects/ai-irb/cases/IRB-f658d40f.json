@@ -1,0 +1,13 @@
+{
+  "id": "IRB-f658d40f",
+  "createdAt": "2026-02-15T19:09:57Z",
+  "severity": "HIGH",
+  "summary": "Sentinel smoke test",
+  "status": "ESCALATED",
+  "affectedSurfaces": [
+    "ops-scripts",
+    "network"
+  ],
+  "evidenceIds": [],
+  "links": []
+}

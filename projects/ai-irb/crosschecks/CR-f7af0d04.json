@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-f7af0d04",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai",
+      "agent_kind": "ai",
+      "agent_label": "openai",
+      "model": "gpt-5.2-2025-12-11",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic",
+      "agent_kind": "ai",
+      "agent_label": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: Anthropic error: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"},\"request_id\":\"req_011CYAP9T25MEvNKULetkuFg\"}",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai",
+      "agent_kind": "ai",
+      "agent_label": "xai",
+      "model": "grok-4-1-fast-reasoning",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: MEDIUM\n2) CONCERNS:\n   * No evidence provided (EVIDENCE_IDS: none), making it impossible to verify safety, stability, or lack of side effects.\n   * Affected surfaces include \"network\", a high-impact area prone to outages, security exposures, or cascading failures if the smoke test introduces flaws.\n   * \"Ops-scripts\" implies automation that could propagate errors across operations; unclear if test is isolated from production.\n   * Summary lacks specifics on test scope (e.g., what endpoints, payloads, or behaviors are tested in Sentinel), risking unintended disruptions.\n3) REQUIRED_GATES:\n   * Submit EVIDENCE_IDS including unit/integration test results, logs, and dry-run outputs demonstrating no regressions.\n   * Provide detailed spec/doc of smoke test logic, including affected network paths, script changes, and isolation from prod (e.g., staging env confirmation).\n   * Network impact assessment: traceroute/traffic capture from test run showing no prod interference or perf degradation.\n   * Security review: confirm Sentinel test doesn't trigger false positives/alert storms or expose creds/endpoints.\n   * Peer code review sign-off on ops-scripts changes.\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not fully converge or an agent errored.",
+  "dissenters": [],
+  "metadata": {
+    "latencyMs": 11643
+  }
+}
