@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-2017b314",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T071956Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Governance surface area:** “Governance engine warm-up” touches policy/enforcement paths; a mistake can cause unintended **allow/deny** decisions or policy drift.\n- **Hourly cadence risk:** Running hourly increases the chance of accumulating side effects (state mutation, cache poisoning, token/credential churn, rate limits) and can amplify impact quickly.\n- **Dogfood ambiguity:** “Dogfood” often implies experimental or non-prod validation; unclear whether this runs in **prod**, what “warm-up” does, and whether it is **read-only**.\n- **Ops-script failure modes:** Scripts can bypass standard controls (idempotency gaps, partial execution, environment leakage, unsafe defaults).\n- **Resource and reliability impact:** Warm-up jobs can cause load spikes, lock contention, increased latency for governance checks, or cost surprises.\n- **Change control / auditability:** Unclear logging/auditing of actions taken during warm-up, and whether changes are attributable and reviewable.\n- **Security posture:** If warm-up requires privileged access, it may expand the credential exposure surface; unclear secret handling and rotation.\n- **Rollback and containment:** Not specified how to disable quickly, revert state, or limit blast radius to a subset of tenants/services.\n\n3) **REQUIRED_GATES:**\n- **Precise spec of behavior:** Document what “warm-up” does (caches populated, policies fetched/compiled, any writes), with explicit **read-only vs write** guarantees.\n- **Idempotency proof:** Evidence/tests showing repeated hourly runs are safe (no cumulative state changes, no duplicate records, no policy version churn).\n- **Environment scoping:** Clear confirmation of where it runs (dev/stage/prod) and explicit **prod safeguards** (feature flag, allowlist, dry-run mode).\n- **Blast radius controls:** Ability to target a limited subset (single region/tenant/service) and progressive rollout plan.\n- **Failure handling & safe defaults:** Demonstrate timeouts, retries with backoff, and “fail-open/fail-closed” behavior is intentional and approved for governance context.\n- **Observability package:** Metrics/logs/traces and alerts for (a) governance decision errors, (b) policy fetch/compile failures, (c) latency/regression, (d) rate-limit/credential errors.\n- **Load/performance testing:** Evidence that hourly warm-up won’t degrade governance request latency or backend capacity; include worst-case and thundering-herd mitigation.\n- **Security review:** Least-privilege credentials, secret storage, rotation, and audit logging; confirm no sensitive data is logged.\n- **Rollback/kill switch:** One-step disablement (config/flag) plus documented runbook; if any state is written, include cleanup/revert procedure.\n- **Change review artifacts:** Link to code diff, peer review, and runbook; map to EVIDENCE_IDS (20260216T071956Z) with concrete results, not just intent.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic/claude-opus-4-6",
+      "agent_kind": "ai",
+      "agent_label": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-6",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "# AI-IRB Panel Assessment\n\n## Summary Review: Hourly dogfood — governance engine warm-up\n\n**EVIDENCE_IDS reviewed:** 20260216T071956Z\n\n---\n\n## 1) RISK: **LOW**\n\n---\n\n## 2) CONCERNS:\n\n- **Scope ambiguity:** \"Hourly dogfood\" is vague — need clarity on whether this is a scheduled cron-like invocation, a one-shot warm-up, or a persistent polling loop. Each has different failure-mode profiles.\n- **Governance engine self-reference:** A governance engine warming itself up introduces a mild bootstrapping concern — if the warm-up path bypasses or short-circuits any governance checks, it could create an unaudited execution window.\n- **Ops-scripts surface:** Changes to ops-scripts can have lateral blast radius if they modify shared utilities, environment variables, or authentication contexts used by other operational tooling.\n- **Resource consumption:** \"Hourly\" cadence on warm-up implies recurring compute/network cost; need confirmation this doesn't degrade availability for production governance evaluations.\n- **Observability:** No mention of logging, alerting, or metrics for warm-up success/failure — silent failures in governance infrastructure are particularly dangerous.\n- **Evidence sufficiency:** Single evidence ID provided; unclear if this includes test results, dry-run logs, or only a design document.\n\n---\n\n## 3) REQUIRED_GATES:\n\n- **Dry-run evidence:** Provide logs from at least one full cycle of the warm-up executing in a staging/non-production environment, demonstrating no side effects on governance decision paths.\n- **Idempotency verification:** Confirm that repeated/overlapping warm-up invocations (e.g., if a previous hourly run hasn't completed) do not cause race conditions or state corruption.\n- **Governance bypass audit:** Explicit attestation that the warm-up path does NOT skip, weaken, or stub out any governance policy checks — the engine must not grade its own homework differently during warm-up.\n- **Rollback plan:** Document how to disable or revert the hourly warm-up without a full deployment, e.g., feature flag or cron disable.\n- **Observability confirmation:** Warm-up must emit structured logs and at minimum a success/failure metric that feeds into existing alerting.\n- **Resource impact assessment:** Brief analysis showing the hourly invocation's compute/memory/network footprint is negligible relative to baseline.\n- **Peer review sign-off:** At least one additional engineer review on the ops-scripts diff, given the shared-surface nature.\n\n---\n\n## 4) RECOMMENDATION: **APPROVE**\n\n*Conditioned on the required gates above being satisfied before merge/deploy.* The change is low-risk in nature — warm-up of an existing engine is a standard operational pattern — but governance infrastructure deserves extra diligence precisely because failures there are silent and systemic. The gates above are lightweight and should not meaningfully delay rollout if the work is already well-structured.",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai/grok-4-1",
+      "agent_kind": "ai",
+      "agent_label": "xai/grok-4-1",
+      "model": "xai/grok-4-1",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro",
+      "model": "google/gemini-3-pro",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-21ab9ca1",
+      "RCPT-41744063",
+      "RCPT-4f42f85f",
+      "RCPT-8bbf6f0b"
+    ]
+  }
+}
