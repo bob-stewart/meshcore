@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeshCORE Receipt",
+  "type": "object",
+  "required": ["id", "createdAt", "kind", "provider", "model"],
+  "properties": {
+    "id": {"type": "string"},
+    "createdAt": {"type": "string"},
+    "kind": {"type": "string", "enum": ["llm-call", "search", "tool"]},
+    "provider": {"type": "string"},
+    "model": {"type": "string"},
+    "latencyMs": {"type": "integer", "minimum": 0},
+    "tokensIn": {"type": "integer", "minimum": 0},
+    "tokensOut": {"type": "integer", "minimum": 0},
+    "costUsd": {"type": "number", "minimum": 0},
+    "status": {"type": "string", "enum": ["OK", "ERROR"]},
+    "error": {"type": "string"},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}
