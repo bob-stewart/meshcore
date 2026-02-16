@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-7f112cf8",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T041956Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS**\n- **Governance correctness risk:** A “warm-up” path can accidentally diverge from the real enforcement path (e.g., different configs/feature flags), masking issues or causing inconsistent governance behavior.\n- **Hidden side effects:** Warm-up may unintentionally perform writes (cache population, DB migrations, token refresh, policy materialization) that could impact prod-like systems.\n- **Resource/availability impact:** Hourly execution can create periodic CPU/memory spikes, lock contention, cache stampedes, or rate-limit pressure on dependencies.\n- **Safety boundary ambiguity:** “Dogfood” can still touch real internal data/systems; unclear whether any customer/regulated data is accessed during warm-up.\n- **Security posture:** Warm-up often requires elevated credentials; risk of over-broad permissions in ops scripts or leaked secrets in logs.\n- **Observability gaps:** If this is a new scheduled job or new code path, failures may be silent (no paging, no SLO ownership) and create latent reliability issues.\n- **Governance bypass risk:** If warm-up changes state (e.g., caches) used by enforcement, a bug could degrade policy enforcement or create a temporary bypass.\n- **Rollback/containment:** Unclear whether there is a fast kill-switch and whether rollback fully reverts any warmed state.\n\n3) **REQUIRED_GATES**\n- **Design/behavior spec:** Document what “warm-up” does and explicitly prove **no writes** (or enumerate all writes) and **no enforcement-impacting state** changes; include dependency map.\n- **Least-privilege review:** IAM/service account permissions for the hourly job; demonstrate it cannot access customer data unless explicitly required and approved.\n- **Staging evidence:** Run in staging with production-like dependencies disabled/mocked as appropriate; provide logs/metrics showing no side effects and bounded runtime.\n- **Load & rate-limit testing:** Evidence that hourly runs won’t exceed quotas or cause measurable latency/error increases in dependencies (API calls, DB, cache).\n- **Observability & alerting:** Metrics (duration, success/fail, dependency error rates), logs with redaction, dashboards, and paging policy with an oncall owner.\n- **Kill-switch/rollback plan:** Immediate disable mechanism (feature flag / scheduler toggle) and confirmation that warmed artifacts can be safely ignored/expired.\n- **Failure-mode analysis:** What happens if warm-up fails mid-run or runs concurrently; ensure idempotency and concurrency control (lock or single-run guarantee).\n- **Change management:** Code review by governance owner + ops owner; runbook updated; post-deploy verification checklist.\n- **Security logging review:** Ensure no secrets/PII in logs; confirm audit logging where relevant (especially for governance-related actions).\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic/claude-opus-4-6",
+      "agent_kind": "ai",
+      "agent_label": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-6",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "# AI-IRB Panel Assessment\n\n## Summary Review: Hourly Dogfood — Governance Engine Warm-Up\n\n---\n\n## 1) RISK: **LOW**\n\n---\n\n## 2) CONCERNS:\n\n- **Scope ambiguity**: \"Governance engine warm-up\" is vaguely described — it is unclear whether this involves executing governance rules against live data, synthetic data, or simply pre-loading models/caches. The distinction matters for data exposure and side-effect risk.\n- **Hourly cadence**: An hourly recurring ops-script touching the governance surface introduces a persistent attack surface and a recurring window for unintended side effects (e.g., state corruption, resource exhaustion, log noise).\n- **\"Dogfood\" framing**: Dogfooding implies self-referential evaluation — if the governance engine is evaluating its own outputs or policies, there is a risk of circular reasoning or self-reinforcing approval patterns that erode oversight integrity.\n- **Single evidence artifact**: Only one evidence ID is provided (20260216T041956Z). Insufficient to establish a pattern of safe behavior or thorough testing.\n- **Blast radius on governance surface**: Any change to the governance surface, even a warm-up script, could inadvertently alter cached policy states, decision logs, or audit trails if not carefully isolated.\n- **Observability**: No mention of monitoring, alerting, or rollback mechanisms for the hourly execution.\n\n---\n\n## 3) REQUIRED_GATES:\n\n- **Detailed design document** clarifying exactly what \"warm-up\" entails — what is loaded, what is executed, what data (if any) is touched, and what state (if any) is mutated.\n- **Isolation verification**: Evidence that the warm-up process is read-only or operates in a sandboxed context with no write access to production governance state or decision logs.\n- **Idempotency proof**: Demonstration that repeated hourly execution produces no cumulative side effects (state drift, log pollution, resource leak).\n- **Dry-run results**: At least 72 hours of dry-run execution logs showing no anomalies, with comparison against baseline governance engine behavior.\n- **Monitoring and alerting plan**: Defined alerts for warm-up failures, latency spikes, or unexpected governance state changes.\n- **Rollback procedure**: Documented and tested mechanism to disable the hourly job immediately without manual intervention (e.g., kill switch, feature flag).\n- **Security review**: Confirmation that the ops-script does not introduce credential exposure, privilege escalation, or new network surface.\n- **Audit trail integrity check**: Verification that warm-up executions are clearly distinguishable from real governance decisions in all logs and audit records (to prevent confusion during incident review or compliance audits).\n\n---\n\n## 4) RECOMMENDATION: **REQUEST_CHANGES**\n\n**Rationale**: The proposal is low-risk in concept but insufficiently specified for a surface as sensitive as governance. The single evidence artifact and vague description do not meet the evidentiary bar for a recurring automated process touching governance infrastructure. The core concern is not that this is dangerous — it is that governance surfaces demand a higher standard of documentation and isolation proof precisely *because* they are the control plane. Approve once the required gates above are satisfied; none should be onerous for a genuinely low-risk warm-up script.",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai/grok-4-1",
+      "agent_kind": "ai",
+      "agent_label": "xai/grok-4-1",
+      "model": "xai/grok-4-1",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro",
+      "model": "google/gemini-3-pro",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-0909a8ff",
+      "RCPT-ec42b1d9",
+      "RCPT-321135ae",
+      "RCPT-ec329664"
+    ]
+  }
+}
