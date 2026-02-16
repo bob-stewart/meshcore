@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-f21d90a6",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T082000Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- “Governance engine warm-up” suggests preloading/initializing a control-plane component; failures could impact **policy evaluation, enforcement, or availability** across dependent systems.\n- Hourly scheduled “dogfood” implies repeated execution; risk of **cascading failure** (e.g., thundering herd at the top of the hour) and **resource exhaustion** (CPU/mem/DB connections/cache churn).\n- Ops-scripts involvement raises risk of **privilege misuse**, **unsafe defaults**, or **insufficient input validation** in automation.\n- Unclear blast radius: whether warm-up touches **production policy stores**, caches, or external services; could cause **unexpected side effects** (writes, lock contention, queue backlogs).\n- Lack of detail on **idempotency** and **concurrency control** (overlapping runs if one hour exceeds runtime).\n- Missing explicit **rollback/disable** mechanism and operational runbook for incident response.\n- Insufficient evidence provided (only EVIDENCE_IDS value, no artifacts described): cannot verify testing, metrics, or change controls.\n\n3) **REQUIRED_GATES:**\n- **Design/spec** describing:\n  - What “warm-up” does (read-only vs write), which services it calls, and the intended operational outcome.\n  - Blast radius (tenants/environments affected) and failure modes.\n- **Safety properties proven/documented:**\n  - Idempotency guarantees; no persistent state mutation unless explicitly intended and reviewed.\n  - Concurrency protection (lock/lease) and max runtime; prevention of overlapping runs.\n- **Staging validation** results (attached to EVIDENCE_IDS: 20260216T082000Z or equivalent):\n  - Integration test demonstrating warm-up success/failure handling and no policy regression.\n  - Load/perf test showing no significant latency/CPU/DB impact at hourly cadence.\n- **Production rollout controls:**\n  - Feature flag / config kill-switch to disable the job immediately.\n  - Gradual rollout (canary to a small subset) with clear success metrics and abort criteria.\n  - Scheduling jitter/backoff to avoid top-of-hour contention; rate limits and timeouts.\n- **Observability & auditability:**\n  - Metrics (success rate, duration, error codes, resource usage), structured logs, and tracing where applicable.\n  - Alerts on failure rate, runtime threshold, and downstream error spikes.\n  - Audit logs for any governance-relevant access; least-privilege credentials review.\n- **Operational readiness:**\n  - Runbook (how to disable, how to diagnose, rollback steps).\n  - On-call ownership and escalation path.\n- **Security review** of ops-scripts (permissions, secret handling, dependency integrity).\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic/claude-opus-4-6",
+      "agent_kind": "ai",
+      "agent_label": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-6",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 402",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai/grok-4-1",
+      "agent_kind": "ai",
+      "agent_label": "xai/grok-4-1",
+      "model": "xai/grok-4-1",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro",
+      "model": "google/gemini-3-pro",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-7f39ca13",
+      "RCPT-272a8bb9",
+      "RCPT-ad020bea",
+      "RCPT-8087a815"
+    ]
+  }
+}
