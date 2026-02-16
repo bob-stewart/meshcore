@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-e665b47f",
+  "createdAt": "2026-02-16T05:20:37Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "anthropic/claude-opus-4-6",
+  "latencyMs": 1362,
+  "tokensIn": 141,
+  "tokensOut": 666,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}
