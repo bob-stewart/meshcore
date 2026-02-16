@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeshCORE AI-IRB Improvement Backlog",
+  "type": "object",
+  "required": ["schema", "run", "links", "signals", "proposals"],
+  "properties": {
+    "schema": {"type": "string"},
+    "run": {
+      "type": "object",
+      "required": ["job_id", "timestamp_utc"],
+      "properties": {
+        "job_id": {"type": "string"},
+        "timestamp_utc": {"type": "string"},
+        "commit_range": {},
+        "forced": {"type": "boolean"},
+        "irb_force": {"type": "boolean"},
+        "irb_surfaces": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "links": {"type": "object", "additionalProperties": true},
+    "signals": {
+      "type": "object",
+      "properties": {
+        "provider_reliability": {"type": "object", "additionalProperties": true},
+        "convergence": {"type": "object", "additionalProperties": true},
+        "adverse_events": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "surface", "risk", "next_action"],
+        "properties": {
+          "id": {"type": "string"},
+          "title": {"type": "string"},
+          "holon": {"type": "string"},
+          "surface": {"type": "string"},
+          "risk": {"type": "string", "enum": ["GREEN", "AMBER", "RED"]},
+          "why_now": {"type": "string"},
+          "expected_impact": {"type": "object", "additionalProperties": true},
+          "evidence": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+          "guardrails": {"type": "array", "items": {"type": "string"}},
+          "next_action": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "routing": {"type": "object", "additionalProperties": true}
+  },
+  "additionalProperties": true
+}
