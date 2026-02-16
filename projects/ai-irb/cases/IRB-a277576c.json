@@ -1,0 +1,17 @@
+{
+  "id": "IRB-a277576c",
+  "createdAt": "2026-02-16T03:38:54Z",
+  "severity": "HIGH",
+  "summary": "Hourly loop test: backlog artifact",
+  "status": "ESCALATED",
+  "affectedSurfaces": [
+    "ops-scripts",
+    "sentinel",
+    "crosscheck",
+    "receipts"
+  ],
+  "evidenceIds": [
+    "20260216T033851Z"
+  ],
+  "links": []
+}

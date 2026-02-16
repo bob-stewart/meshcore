@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-b9e2f8f2",
+  "createdAt": "2026-02-16T03:39:30Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "google/gemini-3-pro",
+  "latencyMs": 102,
+  "tokensIn": 0,
+  "tokensOut": 0,
+  "status": "ERROR",
+  "error": "http=400 body={\"error\":{\"message\":\"google/gemini-3-pro is not a valid model ID\",\"code\":400},\"user_id\":\"org_39gFMF7hbmgC9XkdWbq6FnbC4fq\"}",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}

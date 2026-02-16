@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-7cda7ad8",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T033851Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS**\n- **Backlog growth / unbounded artifacts**: “Hourly loop test” producing a backlog artifact suggests potential for accumulating state (queues, files, DB rows) if cleanup/TTL fails.\n- **Operational noise & alert fatigue**: Impacts to **sentinel** (monitoring/alerting) may create recurring false positives or excessive events.\n- **Cross-system coupling**: Touching **ops-scripts, sentinel, crosscheck, receipts** increases blast radius; a small loop-test bug could cascade into production workflows.\n- **Receipts integrity risk**: Any interaction with “receipts” risks creating duplicate/incorrect records, confusing audit trails, or affecting downstream reconciliation.\n- **Resource / cost risk**: Hourly execution can generate persistent compute/storage/network cost if artifacts are large or retained.\n- **Data exposure risk**: If backlog artifacts contain identifiers, payloads, logs, or receipt details, this raises retention and access-control concerns.\n- **Idempotency & reentrancy**: Hourly loops often re-run after failures; without strict idempotency, can create duplicates and inconsistent states.\n- **Rollback/containment clarity**: No indication of a kill switch, safe disablement, or a guaranteed cleanup path.\n\n3) **REQUIRED_GATES**\n- **Design + threat/abuse review** documenting:\n  - What the “backlog artifact” is (format, storage, retention), and whether it contains any sensitive/regulated data.\n  - Data classification and access controls for the artifact location(s).\n- **Idempotency proof** (tests or formal invariants) showing repeated hourly runs do not create duplicates in **receipts** or **crosscheck** outputs.\n- **Bounded growth controls**:\n  - TTL/expiry, max size/quota, and automated cleanup job with tests.\n  - Demonstration that failure modes do not prevent cleanup.\n- **Staging soak test evidence** (e.g., 72 hours) showing:\n  - No unbounded backlog growth.\n  - No alert storms in sentinel.\n  - Stable resource usage and predictable cost.\n- **Monitoring & alerting plan**:\n  - Explicit SLOs/thresholds for backlog size, processing lag, and error rates.\n  - Alerts tuned to avoid hourly false positives; runbook included.\n- **Safety controls**:\n  - Rate limiting / circuit breaker to stop the loop if backlog crosses thresholds.\n  - Kill switch / feature flag to disable immediately without redeploy.\n- **Rollback plan**:\n  - Clear steps to revert scripts/config and to purge created artifacts safely.\n  - Validation that rollback does not orphan partial receipt/crosscheck state.\n- **Change management artifacts**:\n  - Code review + approval on ops-scripts.\n  - Audit log entries for when/why the loop runs and what it writes.\n- **Evidence linkage**: Provide the contents/summary for **EVIDENCE_IDS: 20260216T033851Z** (logs, metrics, diff, test results).\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic/claude-opus-4-6",
+      "agent_kind": "ai",
+      "agent_label": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-6",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "# AI-IRB Panel Assessment\n\n## Summary Review\n\nThe proposal describes an \"hourly loop test\" targeting a \"backlog artifact\" across multiple operational surfaces. The summary is notably terse and lacks specificity about what is actually being changed, tested, or deployed.\n\n---\n\n## 1) RISK: **MEDIUM**\n\n---\n\n## 2) CONCERNS:\n\n- **Insufficient description**: \"Hourly loop test: backlog artifact\" does not explain what the test does, what the backlog artifact is, what behavior is being introduced or modified, or what the expected outcome is. This alone is a procedural red flag.\n- **Broad surface area**: The change touches four distinct surfaces (ops-scripts, sentinel, crosscheck, receipts), which suggests non-trivial scope despite the casual framing as a \"test.\"\n- **Sentinel and crosscheck involvement**: These are safety-critical monitoring surfaces. Any change to sentinel or crosscheck logic—even in a \"test\" capacity—could degrade oversight fidelity or create blind spots.\n- **Receipts surface**: Modifications to receipts could affect auditability and traceability of actions, which is a governance-critical function.\n- **\"Hourly loop\" pattern**: Recurring automated execution increases blast radius if the change contains errors or unintended side effects. A defect compounds 24x/day.\n- **Single evidence artifact**: Only one evidence ID is provided (20260216T033851Z). It is unclear whether this constitutes a test plan, a test result, a design document, or something else. The date also appears to be in the future (2026), which raises questions about provenance.\n- **No rollback plan described**: No mention of how to halt or revert if the loop test produces adverse effects.\n\n---\n\n## 3) REQUIRED_GATES:\n\n- **Expanded change description**: A clear, plain-language explanation of what the hourly loop test does, what the \"backlog artifact\" is, and what constitutes success/failure.\n- **Scope justification**: Rationale for why all four surfaces are affected and confirmation that changes to sentinel/crosscheck are read-only or otherwise non-degrading to safety monitoring.\n- **Evidence review**: The referenced evidence (20260216T033851Z) must be made available for panel inspection with clear labeling of what it demonstrates.\n- **Blast radius analysis**: Documentation of worst-case failure modes for a recurring hourly execution, including cascading effects across the four surfaces.\n- **Rollback / kill-switch mechanism**: A documented, tested mechanism to halt the loop and revert any state changes within one cycle.\n- **Dry-run results**: At least one successful dry-run execution with logged outputs reviewed by a human operator before recurring automation is enabled.\n- **Monitoring and alerting**: Confirmation that anomalous behavior in any of the four surfaces during loop execution will trigger alerts to a human reviewer.\n- **Time-boxed approval**: If approved, the loop test should have a defined expiration (e.g., 72 hours) after which it auto-disables and requires re-review.\n\n---\n\n## 4) RECOMMENDATION: **REQUEST_CHANGES**\n\n**Rationale**: The proposal as submitted does not meet the minimum evidentiary and descriptive standards for a change touching safety-critical surfaces. The terse summary, broad scope, single evidence artifact, and lack of rollback planning are collectively disqualifying in the current form. This is not a rejection of the concept—it is a request for the proposer to provide sufficient detail for the panel to make an informed safety determination. The involvement of sentinel and crosscheck surfaces elevates this beyond a routine ops-script change and demands proportionate rigor.",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai/grok-4-1",
+      "agent_kind": "ai",
+      "agent_label": "xai/grok-4-1",
+      "model": "xai/grok-4-1",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro",
+      "model": "google/gemini-3-pro",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-4e20e2ea",
+      "RCPT-58e1e4a2",
+      "RCPT-985eb91d",
+      "RCPT-b9e2f8f2"
+    ]
+  }
+}
