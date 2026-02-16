@@ -1,0 +1,97 @@
+{
+  "schema": "meshcore.irb.improvement.v1",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-02-16T09:20:24Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ]
+  },
+  "links": {
+    "evidence_bundle": "20260216T091956Z",
+    "case": "IRB-5f6cd933",
+    "findings": "FIND-2e3f9559",
+    "crosscheck": "CR-dde29e05",
+    "receipts": [
+      "RCPT-c456dc6f",
+      "RCPT-ae485688",
+      "RCPT-a6db4199",
+      "RCPT-e7eff3de"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 0.25,
+      "error_rate_1h": 0.75,
+      "median_latency_ms": 198
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 0,
+      "common_disagreements": []
+    },
+    "adverse_events": {
+      "count": 3,
+      "events": [
+        {
+          "model": "anthropic/claude-opus-4-6",
+          "error": "http=402 body={\"error\":{\"message\":\"This request requires more credits, or fewer max_tokens. You requested up to 900 tokens, but can only afford 614. To increase, visit https://openrouter.ai/settings/credits and upgrade to a paid account\",\"code\":402,\"metadata\":{\"provider_name\":null}},\"user_id\":\"user_39gEuVtKiLyfbF0ZZGuJhJyyHlh\"}"
+        },
+        {
+          "model": "xai/grok-4-1",
+          "error": "http=400 body={\"error\":{\"message\":\"xai/grok-4-1 is not a valid model ID\",\"code\":400},\"user_id\":\"user_39gEuVtKiLyfbF0ZZGuJhJyyHlh\"}"
+        },
+        {
+          "model": "google/gemini-3-pro",
+          "error": "http=400 body={\"error\":{\"message\":\"google/gemini-3-pro is not a valid model ID\",\"code\":400},\"user_id\":\"user_39gEuVtKiLyfbF0ZZGuJhJyyHlh\"}"
+        }
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260216-09-001",
+      "title": "TBD (auto-generated placeholder) — propose a safe improvement backed by receipts",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "GREEN",
+      "why_now": "Hourly loop running; collect signals and propose bounded improvements.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "up",
+        "confidence": 0.5
+      },
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-c456dc6f",
+          "note": "See receipts for provider reliability."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "QUEUE_FOR_REVIEW"
+    }
+  ],
+  "routing": {
+    "forums": [
+      {
+        "name": "Advantage Forum",
+        "reason": "learning loop consistency"
+      },
+      {
+        "name": "Ethics Forum",
+        "reason": "severity/escalation semantics"
+      }
+    ],
+    "review_sla_hours": 72
+  }
+}
