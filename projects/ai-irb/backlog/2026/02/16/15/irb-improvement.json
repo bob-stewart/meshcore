@@ -1,0 +1,93 @@
+{
+  "schema": "meshcore.irb.improvement.v1",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-02-16T15:21:20Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ]
+  },
+  "links": {
+    "evidence_bundle": "20260216T152038Z",
+    "case": "IRB-448ef7ac",
+    "findings": "FIND-a82d2b3f",
+    "crosscheck": "CR-7351222b",
+    "receipts": [
+      "RCPT-a607defa",
+      "RCPT-38a2286d",
+      "RCPT-e8e1eeec",
+      "RCPT-e4c57869"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 0.5,
+      "error_rate_1h": 0.5,
+      "median_latency_ms": 369
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 0,
+      "common_disagreements": []
+    },
+    "adverse_events": {
+      "count": 2,
+      "events": [
+        {
+          "model": "xai/grok-4-1",
+          "error": "http=400 body={\"error\":{\"message\":\"xai/grok-4-1 is not a valid model ID\",\"code\":400},\"user_id\":\"org_39gFMF7hbmgC9XkdWbq6FnbC4fq\"}"
+        },
+        {
+          "model": "google/gemini-3-pro",
+          "error": "http=400 body={\"error\":{\"message\":\"google/gemini-3-pro is not a valid model ID\",\"code\":400},\"user_id\":\"org_39gFMF7hbmgC9XkdWbq6FnbC4fq\"}"
+        }
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260216-15-001",
+      "title": "TBD (auto-generated placeholder) — propose a safe improvement backed by receipts",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "GREEN",
+      "why_now": "Hourly loop running; collect signals and propose bounded improvements.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "up",
+        "confidence": 0.5
+      },
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-a607defa",
+          "note": "See receipts for provider reliability."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "QUEUE_FOR_REVIEW"
+    }
+  ],
+  "routing": {
+    "forums": [
+      {
+        "name": "Advantage Forum",
+        "reason": "learning loop consistency"
+      },
+      {
+        "name": "Ethics Forum",
+        "reason": "severity/escalation semantics"
+      }
+    ],
+    "review_sla_hours": 72
+  }
+}

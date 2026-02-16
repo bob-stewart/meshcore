@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-7351222b",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T152038Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS**\n- **Governance surface impact:** “governance engine warm-up” may touch policy evaluation, authz paths, enforcement caches, or configuration—errors here can have **wide blast radius** (incorrect allow/deny, misapplied policies).\n- **Hourly automation risk:** An hourly dogfood job can become an **unbounded recurring incident source** (retry storms, accumulating backlog, repeated failures paging ops).\n- **Load / resource contention:** Warm-up may increase CPU/memory, cache churn, DB reads, or external calls—risking **performance regression** or throttling for real traffic.\n- **Environment ambiguity:** “Dogfood” can still mean production-like data/access. Risk of **privacy exposure** or unintended access if tokens/scopes are broad.\n- **Ops-scripts safety:** Scripts can bypass application guardrails (direct API calls, elevated credentials). Risk of **credential leakage**, unsafe defaults, or running against wrong environment.\n- **Change control/auditability:** Governance-related behavior changes need strong **audit logs** and change tracking; warm-up could obscure attribution if it generates significant policy traffic.\n- **Failure mode handling:** Unclear what happens on partial failure—could leave caches in inconsistent state or trigger fallback behaviors.\n- **Rollback/kill switch:** Not stated whether there is an immediate disable mechanism (feature flag, scheduler toggle) and whether rollback is safe.\n- **Observability:** No evidence provided that metrics/alerts are in place to detect adverse effects (latency, error rates, policy decision anomalies).\n\n3) **REQUIRED_GATES**\n- **Design + scope document** (mapped to EVIDENCE_IDS: 20260216T152038Z) including:\n  - Exact endpoints/components touched by warm-up\n  - Permissions/scopes used\n  - Data accessed (and whether any user/tenant data is involved)\n  - Expected QPS/cost per run and worst-case bounds\n- **Safety controls in the ops-script**\n  - Hard-coded environment allowlist (prevent prod misuse if not intended)\n  - Rate limiting / concurrency limits / timeouts\n  - Idempotency and bounded retries (no retry storms)\n  - Explicit “no-op” / dry-run mode for validation\n- **Rollout plan**\n  - Feature flag or scheduler toggle (kill switch) with documented on-call procedure\n  - Gradual ramp (e.g., run in staging → limited dogfood cohort → full dogfood)\n  - Defined rollback steps and verification checklist\n- **Load/perf testing evidence**\n  - Measured incremental CPU/memory/DB/cache impact per run\n  - Impact on tail latency and error rates in governance decision paths\n  - Confirmation it does not evict/poison caches used by real traffic\n- **Security review**\n  - Credential storage/rotation method, least-privilege permissions\n  - Confirmation no sensitive logs (tokens/PII) emitted by the script\n  - Access auditing enabled for warm-up calls\n- **Correctness/regression testing**\n  - Unit/integration tests verifying warm-up does not change enforcement outcomes\n  - Canary validation comparing policy decision results pre/post change\n- **Observability gates**\n  - Dashboards and alerts: run success/failure, duration, retries, decision error rates, latency, cache metrics\n  - Runbook for common failure modes (throttling, auth failures, partial outages)\n- **Operational guardrails**\n  - Scheduling collision analysis (does hourly overlap with other jobs/deploy windows?)\n  - Clear ownership and paging policy for failures\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic/claude-opus-4-6",
+      "agent_kind": "ai",
+      "agent_label": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-6",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "# AI-IRB Panel Assessment\n\n## SUMMARY REVIEW: Hourly dogfood — governance engine warm-up\n\n**Assessment Date:** 2025-07-02\n**Evidence Reviewed:** 20260216T152038Z\n\n---\n\n## 1) RISK: **LOW**\n\n---\n\n## 2) CONCERNS:\n\n- **Scope ambiguity:** \"Governance engine warm-up\" is vaguely described — it is unclear whether this involves executing governance rules/policies in a dry-run mode, loading models into memory, or actively processing real decisions during warm-up cycles.\n- **Hourly cadence justification:** No rationale provided for why hourly frequency is necessary versus on-demand or less frequent warm-up. Unnecessary frequency increases attack surface and resource consumption.\n- **Ops-scripts surface:** Changes to ops-scripts can have cascading effects if warm-up routines fail silently or produce side effects (e.g., stale cache states, partial policy loads that are then treated as authoritative).\n- **Governance surface integrity:** Any routine that \"warms up\" the governance engine must not inadvertently alter governance state, bypass policy checks, or create a window where partially-loaded policies are evaluated against real requests.\n- **Single evidence artifact:** Only one evidence ID is provided. Insufficient to assess whether testing, rollback planning, or monitoring has been considered.\n- **Dogfooding context:** \"Dogfood\" implies internal self-testing — but it is unclear whether this warm-up path is identical to or divergent from the production governance path, which could mask bugs.\n\n---\n\n## 3) REQUIRED_GATES:\n\n- **Idempotency verification:** Evidence that repeated hourly warm-up executions produce no side effects and do not mutate governance state.\n- **Failure-mode analysis:** Documentation of what happens when warm-up fails (timeout, partial load, network partition) — confirm it fails closed (governance defaults to deny/safe state).\n- **Monitoring & alerting:** Confirm that observability is in place for warm-up success/failure, latency, and resource consumption, with alerts on anomalies.\n- **Rollback plan:** Documented procedure to disable or revert the hourly warm-up without impacting governance availability.\n- **Dry-run / staging validation:** Evidence of successful execution in a non-production environment across multiple cycles (minimum 24 hours / 24 cycles).\n- **No-op confirmation under load:** Verification that warm-up does not interfere with concurrent real governance evaluations.\n- **Access control review:** Confirmation that the ops-script changes do not introduce new privilege escalation paths or weaken existing access controls on governance configuration.\n- **Cadence justification memo:** Brief written rationale for hourly frequency with analysis of alternatives.\n\n---\n\n## 4) RECOMMENDATION: **REQUEST_CHANGES**\n\n**Rationale:** The change is conceptually low-risk (warm-up/keep-alive patterns are standard operational practice), but the proposal as submitted lacks sufficient evidence and specificity to approve. The governance engine is a safety-critical surface — even benign operational changes to it warrant clear documentation of failure modes, idempotency guarantees, and staging validation. Providing the required gates above should be straightforward if the change is as simple as described; if it is not straightforward, that itself signals the risk level should be re-evaluated upward.\n\n**Path to approval:** Submit the required gate evidence and clarify the scope of \"warm-up\" (what exactly executes, against what data, with what permissions). Upon satisfactory review, this should be approvable without further panel convening.",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai/grok-4-1",
+      "agent_kind": "ai",
+      "agent_label": "xai/grok-4-1",
+      "model": "xai/grok-4-1",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro",
+      "model": "google/gemini-3-pro",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-a607defa",
+      "RCPT-38a2286d",
+      "RCPT-e8e1eeec",
+      "RCPT-e4c57869"
+    ]
+  }
+}
