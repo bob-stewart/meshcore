@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-2268f73f",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T211957Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Unintended side effects in governance plane:** “Warm-up” may still trigger writes, cache invalidations, background jobs, policy evaluations, or audit log growth if the endpoint isn’t strictly read-only.\n- **Privilege / credential risk:** An ops-script that authenticates to governance can become a durable high-privilege automation foothold (token leakage, overly broad scopes, lack of rotation).\n- **Load and cost amplification:** Hourly invocation across environments/regions can create steady-state load, increase DB/cache churn, and mask real traffic patterns; could also cause noisy audit/telemetry costs.\n- **Failure-mode impact:** If the warm-up job fails/retries aggressively, it can create cascading failures (thundering herd at the top of the hour, retry storms, log storms).\n- **Cross-environment contamination:** Risk of running in prod unintentionally (or using prod credentials in non-prod) if environment gating is weak.\n- **Operational ambiguity:** “Dogfood” + “governance” suggests internal testing; unclear whether this is meant for production, and what success criteria are.\n- **Compliance / audit implications:** Governance systems often underpin access control/policy decisions; any automated periodic action may need explicit auditability and change management.\n\n3) **REQUIRED_GATES:**\n- **Precise technical spec of the warm-up action**\n  - Exact endpoint(s)/RPC(s) called, request payloads, expected response, and confirmation it is **read-only / idempotent**.\n  - Documented reasoning for why warm-up is necessary (latency/SLO evidence) and why hourly cadence is appropriate.\n- **Security & access controls**\n  - Dedicated service identity with **least-privilege scope** (explicitly no write/admin permissions).\n  - Secret handling plan: storage, rotation, TTL, and proof no secrets are logged.\n  - Environment allowlist (e.g., only dogfood/staging unless explicitly approved for prod) enforced in code/config.\n- **Load/impact testing evidence**\n  - Staging test showing QPS, DB/cache impact, and audit-log volume attributable to the job.\n  - Confirmation that warm-up does not trigger expensive policy evaluations or background jobs beyond intended.\n- **Safe scheduling & retry controls**\n  - Jittered schedule (avoid top-of-hour synchronization), bounded retries with backoff, and hard timeout.\n  - Concurrency controls (single-flight / leader election) to prevent multiple instances running simultaneously.\n- **Observability & rollback**\n  - Metrics and alerts: success rate, latency, error rate, downstream dependencies, and audit-log volume.\n  - Runbook for failures and a **one-click disable** (feature flag / config kill switch).\n  - Canary rollout plan (single region/env first) with defined pass/fail thresholds.\n- **Governance/audit review**\n  - Confirmation from governance owners that this pattern is acceptable and won’t interfere with policy integrity, audit requirements, or incident response.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential resource overhead from hourly scheduling on shared ops infrastructure\n   * Unverified isolation of dogfood data from production governance surfaces\n   * Lack of detail on governance engine side effects (e.g., logging, metrics emission, or state mutation)\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260216T211957Z for dogfood dataset isolation proof, idempotency tests, and resource benchmarks\n   * Confirm no production data access via ops-scripts audit\n   * Run 24-hour canary in staging with monitoring for CPU/memory spikes and error rates\n   * Document rollback plan and alert thresholds for first production hour\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Resource Contention:** Increasing the frequency of governance engine execution to hourly could create a \"noisy neighbor\" effect, potentially starving production resources if the dogfood environment shares underlying infrastructure (compute/database) with production.\n*   **Audit Log Pollution:** \"Warming up\" the engine implies synthetic transactions. There is a risk that these synthetic checks will be indistinguishable from actual policy enforcement events, corrupting compliance audit trails.\n*   **State Locking:** If the warm-up routine involves write operations (e.g., updating cache or state tables), there is a risk of database locking or race conditions that could block legitimate governance checks during the warm-up window.\n*   **Alert Fatigue:** If the warm-up script fails (e.g., due to transient network issues), it may trigger high-severity alerts meant for critical governance failures, desensitizing the on-call team.\n\n3) REQUIRED_GATES:\n*   **Infrastructure Isolation Verification:** Evidence confirming that the dogfood governance instance is logically and physically isolated from the production control plane (i.e., no shared Redis/SQL instances).\n*   **Synthetic Data Tagging:** Demonstration that all telemetry and logs generated by the warm-up script are explicitly tagged (e.g., `is_synthetic: true`) to ensure they can be filtered out of compliance reports.\n*   **Resource Profiling:** A comparison of CPU/Memory usage before and after the change in the test environment to ensure the hourly cadence does not introduce memory leaks or unmanageable spikes.\n*   **Timeout/Circuit Breaker Logic:** Review of the ops-script to ensure it has hard timeouts; the warm-up must fail open and silently rather than hanging the system or retrying indefinitely.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**\n\n*Reasoning: While dogfooding is standard practice, automating high-frequency execution of the governance engine—the primary safety mechanism—requires proof that this automation cannot negatively impact production stability or auditability. The isolation and logging safeguards must be verified before enabling the schedule.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-3a076d2d",
+      "RCPT-7d17b993",
+      "RCPT-29e548dd"
+    ]
+  }
+}
