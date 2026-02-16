@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-d860eaec",
+  "createdAt": "2026-02-16T14:20:04Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "anthropic/claude-opus-4-6",
+  "latencyMs": 303,
+  "tokensIn": 0,
+  "tokensOut": 0,
+  "status": "ERROR",
+  "error": "http=402 body={\"error\":{\"message\":\"This request requires more credits, or fewer max_tokens. You requested up to 900 tokens, but can only afford 443. To increase, visit https://openrouter.ai/settings/credits and upgrade to a paid account\",\"code\":402,\"metadata\":{\"provider_name\":null}},\"user_id\":\"user_39gEuVtKiLyfbF0ZZGuJhJyyHlh\"}",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}
