@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-13df251e",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260216T102000Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Governance-critical surface:** “governance engine warm-up” touches components that may influence authorization/policy enforcement; failure modes can become **security-impacting** (e.g., stale caches, partial initialization, unexpected defaults).\n- **Hourly automation risk:** Repeated execution increases blast radius of a bug (resource leaks, accumulating state, log growth, repeated side effects).\n- **Idempotency/side effects unclear:** “Warm-up” can unintentionally mutate state (cache priming that persists, DB writes, policy refreshes) if not strictly read-only or if retries occur.\n- **Privilege and secret handling:** Ops-scripts often run with elevated credentials; risk of over-scoped IAM/service tokens, secret exposure in logs, or lateral movement paths.\n- **Load and throttling:** Hourly warm-up could cause synchronized load spikes (DB, policy store, network) or contention with other scheduled jobs.\n- **Observability gaps:** Without explicit success criteria, alerting, and audit trails, failures may go unnoticed or be hard to attribute.\n- **Rollback/kill-switch uncertainty:** If the job misbehaves, ability to quickly disable it without redeploying or breaking other scheduled automation must be assured.\n- **Change justification not evidenced:** Only an evidence ID is provided; no measurable baseline (latency/cold-start impact) or proof that warm-up is necessary and safe.\n\n3) **REQUIRED_GATES:**\n- **Design/spec gate**\n  - Clear definition of “warm-up” behavior: read-only vs. write, what endpoints/resources are touched, expected duration, and explicit “no policy change” guarantees.\n  - Explicit **idempotency** and retry behavior (including timeouts and backoff) documented.\n- **Security review gate**\n  - Least-privilege IAM/service account review (scopes, token lifetime, rotation), and confirmation no secrets are logged.\n  - Threat model focused on governance impacts (cache poisoning, stale policy, partial init, privilege escalation).\n- **Testing gate**\n  - Staging test run covering: success path, dependency failures, partial outages, and repeated hourly executions (soak test).\n  - Negative tests verifying warm-up cannot modify governance state/policies (or if it must, controlled + audited writes).\n- **Operational safety gate**\n  - Rate limiting/concurrency control (single-flight, lock, or “skip if already running”), with hard timeouts.\n  - Monitoring + alerting: job success/failure, duration, error rates, downstream dependency health, and resource usage.\n  - Audit logging requirements: who/what triggered, what was accessed, correlation IDs.\n  - **Kill switch** (config flag) and documented rollback procedure; validated in staging.\n- **Progressive rollout gate**\n  - Canary enablement in a limited environment/tenant/region first, with defined acceptance criteria (e.g., reduced cold-start latency without increased error rate).\n  - Post-deploy review plan (24–72h) confirming no regressions in governance decision latency, error rates, and resource consumption.\n- **Evidence gate**\n  - Attach/produce artifacts referenced by **EVIDENCE_IDS: 20260216T102000Z** (logs, metrics, test results) demonstrating safe behavior and benefit.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:anthropic/claude-opus-4-6",
+      "agent_kind": "ai",
+      "agent_label": "anthropic/claude-opus-4-6",
+      "model": "anthropic/claude-opus-4-6",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 402",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:xai/grok-4-1",
+      "agent_kind": "ai",
+      "agent_label": "xai/grok-4-1",
+      "model": "xai/grok-4-1",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro",
+      "model": "google/gemini-3-pro",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "ERROR: openrouter 400",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-ea7b4463",
+      "RCPT-e952f396",
+      "RCPT-4c1a949e",
+      "RCPT-c8e698db"
+    ]
+  }
+}

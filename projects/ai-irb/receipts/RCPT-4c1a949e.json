@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-4c1a949e",
+  "createdAt": "2026-02-16T10:20:24Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "xai/grok-4-1",
+  "latencyMs": 88,
+  "tokensIn": 0,
+  "tokensOut": 0,
+  "status": "ERROR",
+  "error": "http=400 body={\"error\":{\"message\":\"xai/grok-4-1 is not a valid model ID\",\"code\":400},\"user_id\":\"user_39gEuVtKiLyfbF0ZZGuJhJyyHlh\"}",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}
