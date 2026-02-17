@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-d7f5fb34",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260217T171957Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: HIGH**\n\n2) **CONCERNS:**\n- **Governance surface is safety‑critical**: “warm‑up” behavior could inadvertently change enforcement timing/order, cache stale/incorrect policy state, or mask real policy evaluation latency/issues.\n- **Ops-scripts execution risk**: scheduled scripts often run with elevated privileges; misconfiguration can lead to unintended broad access, destructive actions, or lateral movement.\n- **Hourly cadence amplifies blast radius**: repeated execution can cause recurring outages, quota exhaustion, cost spikes, log/metrics flooding, or thundering-herd effects.\n- **Environment boundary ambiguity**: “dogfood” can still touch prod-adjacent data/services; unclear isolation and data handling.\n- **Idempotency/rollback unclear**: warm-up tasks that mutate caches/state can be non-idempotent; failure modes and rollback strategy not specified.\n- **Observability/audit requirements**: governance actions typically require strong audit trails; unclear what is logged, retained, and alerting thresholds.\n\n3) **REQUIRED_GATES:**\n- **Design/spec** describing exact warm-up actions (read/write paths, services touched, policy artifacts loaded, caches mutated, failure behavior).\n- **Threat model / security review** for the ops-script and governance interactions (privileges, secrets handling, network egress, dependency trust).\n- **Least-privilege proof**: IAM role/policy diff showing minimal permissions; separation between dogfood and production resources.\n- **Idempotency & safety tests**: repeated-run validation, concurrency behavior, rate limiting/backoff, and safe no-op on partial failures.\n- **Staging + canary rollout**: run in a non-prod environment first, then limited-scope canary (subset of tenants/policies/nodes) with explicit success criteria.\n- **Performance/regression evidence**: load/latency impact of warm-up; resource ceilings; confirmation it reduces cold-start without harming steady-state.\n- **Observability**: dashboards/alerts for errors, latency, cache hit rate, governance evaluation correctness signals; log/audit events with retention plan.\n- **Operational controls**: easy kill switch, rollback procedure, runbook, and on-call ownership; change window and incident response plan.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential for unintended governance triggers during warm-up (e.g., false positives in policy enforcement)\n   * Resource consumption from hourly execution (CPU/memory impact on ops infrastructure)\n   * Lack of visibility into failure modes or error handling in dogfood runs\n   * Dependency on EVIDENCE_IDS for auditability; unverified evidence could hide issues\n3) REQUIRED_GATES:\n   * Code review of ops-scripts changes confirming no live enforcement actions\n   * Review of EVIDENCE_IDS 20260217T171957Z for test logs, resource metrics, and failure simulations\n   * Staging deployment with 24-hour observation period and alerting setup\n   * Documentation of rollback procedure and monitoring dashboard for prod rollout\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Resource Contention:** \"Warming up\" a governance engine implies generating load. If the dogfood environment shares underlying infrastructure (compute, database, API quotas) with Production, this hourly spike could degrade the performance of actual safety enforcement.\n*   **Alert Fatigue:** Governance engines typically emit alerts upon policy violations or system errors. An hourly automated run carries a high risk of generating \"noise\" (false positives), desensitizing on-call responders to genuine governance failures.\n*   **Audit Log Pollution:** High-frequency automated runs may flood audit logs, making it difficult to trace genuine human actions or security incidents within the governance history.\n*   **Configuration Drift:** If the \"warm-up\" script modifies state to test the engine, there is a risk it leaves the environment in a non-deterministic state for subsequent users.\n\n3) REQUIRED_GATES:\n*   **Environment Isolation Proof:** Evidence that the `ops-scripts` are hard-coded or strictly scoped to the Dogfood environment ID and cannot accept a Production environment ID as a variable.\n*   **Resource Impact Analysis:** Telemetry data from a dry run showing CPU/Memory/IOPS usage does not exceed 10% of available headroom to prevent \"noisy neighbor\" issues with Prod.\n*   **Alert Routing Verification:** Confirmation that all logs and alerts generated by this specific cron job are routed to a dedicated testing channel or suppressed, ensuring they do not trigger PagerDuty/On-Call flows.\n*   **Idempotency Check:** Verification that the warm-up routine cleans up after itself and does not result in cumulative database growth or state changes over 24 hours.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**\n\n*Rationale: While dogfooding is standard practice, automating load on the Governance surface requires explicit safeguards against resource starvation and alert fatigue which are not detailed in the summary. Approval is contingent on the Alert Routing and Resource Impact evidence.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-34156bf6",
+      "RCPT-26817814",
+      "RCPT-861f6f29"
+    ]
+  }
+}
