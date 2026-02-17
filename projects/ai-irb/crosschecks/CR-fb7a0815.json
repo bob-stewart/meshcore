@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-fb7a0815",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260217T011956Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Governance-plane impact:** Any change that touches “governance engine” risks unintended policy enforcement changes, degraded enforcement latency, or misconfiguration that could broaden access/allow actions incorrectly.\n- **Operational blast radius:** “Hourly” execution can turn a small defect into repeated outages/noise (logs/alerts), resource churn, or cascading failures across dependent services.\n- **Privilege & trust boundary:** Ops scripts often run with elevated credentials; a warm-up job could unintentionally exercise privileged pathways, expand access patterns, or create an exfiltration vector via logs/telemetry.\n- **Ambiguity of “warm-up”:** Unclear whether warm-up is read-only (cache priming) vs. mutating state (writing policy materialization, refreshing keys, updating indexes).\n- **Failure mode handling:** Risk of thundering herd, retries, and partial warm-ups leading to inconsistent governance state or degraded performance at the top of the hour.\n- **Auditability & traceability:** If this runs automatically, it must be attributable (service identity), logged, and distinguishable from real governance decisions.\n- **Dogfood scope:** If this impacts production governance paths (even indirectly), “dogfood” phrasing can mask that it’s a production control-plane change.\n\n3) **REQUIRED_GATES:**\n- **Design clarification doc** (must be explicit):\n  - What exactly is warmed up (caches, policy compilation, key/material retrieval, permission checks)?\n  - Confirm **read-only vs write/mutate** behavior; enumerate any state changes.\n  - Identities/roles used; least-privilege permission set.\n- **Threat model / security review** for the job + scripts:\n  - Credential handling, secret access, logging redaction, and prevention of privilege escalation.\n- **Safety properties & invariants** with tests proving them:\n  - No policy changes, no authorization bypass, no widening of access.\n  - Idempotency and bounded retries.\n- **Staging + canary evidence**:\n  - Run in non-prod with representative config; show metrics before/after (latency, error rate, cache hit rate).\n  - Canary in prod with limited scope (single region/cluster) and automatic rollback criteria.\n- **Rate limiting & scheduling controls**:\n  - Jittered start times to avoid top-of-hour spikes; concurrency limits.\n  - Backoff/disable switch if downstream dependencies degrade.\n- **Observability gates**:\n  - Dedicated dashboards/alerts for warm-up runs (success/failure, duration, dependency errors, resource usage).\n  - Audit logs tagged as “warm-up” and linked to change/version.\n- **Rollback / kill-switch**:\n  - One-step disablement (feature flag or scheduler toggle) plus documented rollback plan and oncall runbook.\n- **Change management evidence**:\n  - Link the contents of **EVIDENCE_IDS: 20260217T011956Z** (diffs, runbooks, test results). Approval blocked until the evidence is reviewable.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal operational impact expected from internal dogfooding, but confirm no unintended prod bleed.\n   * Hourly cadence could accumulate resource usage (CPU/memory/logs) if not throttled.\n   * Evidence ID lacks context; unverified changes to ops-scripts/governance could introduce subtle bugs.\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260217T011956Z for code diffs, test logs, and resource projections.\n   * Confirm isolation: dry-run/prod-exclusion assertions in ops-scripts.\n   * Metrics baseline: 24h simulation for resource burn and error rates.\n   * Governance engine audit: verify warm-up doesn't trigger real policies/actions.\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **LOW**\n\n2) CONCERNS:\n*   **Audit Trail Pollution:** Hourly execution generates significant log volume (~8,700 events/year). If these events are indistinguishable from human traffic, it compromises the defensibility and accuracy of governance compliance audits.\n*   **Data Provenance:** The term \"dogfood\" implies internal usage. It is unclear if the warm-up inputs are static synthetic data or sampled from live internal channels. Using real internal data for automated loops introduces unnecessary data leakage risks.\n*   **Alert Fatigue:** If the warm-up script encounters transient errors, it must not trigger high-severity security incidents (SEV-1/SEV-2), which would desensitize the team to actual governance breaches.\n\n3) REQUIRED_GATES:\n*   **Telemetry Segregation:** Evidence that all requests generated by this script are tagged with metadata (e.g., `is_synthetic: true`, `user_agent: ops-warmup`) to ensure they can be filtered out of compliance reports.\n*   **Static Payload Verification:** Confirmation that the input data used for the warm-up is hardcoded/synthetic and does not sample live PII or proprietary employee prompts.\n*   **Least Privilege Access:** Verification that the script possesses `read/execute` permissions only and cannot modify governance policies or configurations.\n\n4) RECOMMENDATION: **APPROVE**",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-894b4cb4",
+      "RCPT-700de9a2",
+      "RCPT-c41a567a"
+    ]
+  }
+}
