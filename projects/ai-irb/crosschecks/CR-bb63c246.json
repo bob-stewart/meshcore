@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-bb63c246",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260217T141957Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n- **Insufficient detail** on what “governance engine warm-up” does (read-only cache priming vs. policy evaluation vs. enforcement side effects).\n- **Hourly automation risk**: repeated execution can amplify a latent bug into sustained incident (resource leak, runaway logs, disk fill, API quota exhaustion).\n- **Privilege boundary / access**: ops-scripts often run with elevated credentials; unclear least-privilege, secret handling, and blast radius if compromised.\n- **Governance surface sensitivity**: anything touching governance/policy systems can affect access control, compliance posture, or decisioning availability.\n- **Production load / stability**: warm-up may cause periodic load spikes, lock contention, cache stampedes, or DB/query amplification.\n- **Failure modes not specified**: what happens on partial failure—retries, backoff, alerting, and whether it can block/impact governance operations.\n- **Observability/auditability**: unclear logging, traceability, and whether actions are attributable (who/what ran, inputs, outputs).\n- **Change control**: “dogfood” implies internal use, but still needs guardrails if it touches shared/prod infrastructure.\n\n3) REQUIRED_GATES:\n- **Design/implementation doc** describing:\n  - Exact actions performed (endpoints/commands, read/write behavior, resources touched).\n  - Expected runtime, payload sizes, and idempotency guarantees.\n- **Threat model + security review** covering:\n  - Credential storage/rotation, least-privilege IAM, network paths, and compromise scenarios.\n  - Confirmation it cannot trigger policy changes or enforcement actions unless explicitly intended.\n- **Safety controls in code**:\n  - Rate limits, timeouts, bounded retries with exponential backoff, and circuit breaker behavior.\n  - Concurrency control to prevent overlapping runs.\n  - Hard caps on log volume and output size.\n- **Non-prod validation evidence**:\n  - Load/perf test demonstrating no meaningful impact on governance latency/availability.\n  - Failure-injection tests (dependency down, slow responses, partial outages) showing safe degradation.\n- **Observability & audit**:\n  - Metrics (success/fail, duration, QPS, error classes), structured logs, and tracing.\n  - Alerts with clear on-call ownership and runbooks.\n- **Rollout plan**:\n  - Staged rollout (canary), feature flag/kill switch, and documented rollback procedure.\n  - Defined success criteria and SLO impact thresholds.\n- **Compliance check** (if governance involves sensitive data):\n  - Data minimization, access logging, retention policy, and confirmation no new data egress.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   - Potential minor resource overhead from hourly execution on ops-scripts/governance surfaces (e.g., CPU/memory spikes during warm-up).\n   - Unclear scope of \"governance engine\" warm-up: confirm it uses synthetic/test data only, with no risk of false positives triggering real governance actions.\n   - Dependency on EVIDENCE_IDS for validation; without direct review, assumes no undisclosed side effects on production governance flows.\n3) REQUIRED_GATES:\n   - Review EVIDENCE_IDS (20260217T141957Z) logs/output for execution history, error rates, and resource metrics over 24-48 hours.\n   - Confirm isolation: dogfood runs must use non-prod data/environments; provide env config or runbook excerpt.\n   - Metrics threshold test: validate <1% error rate and <5min avg runtime per hour over test period.\n   - Peer code review sign-off on ops-scripts changes.\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Audit Log Pollution:** The Governance engine is a critical compliance component. Injecting hourly synthetic traffic (\"dogfood\") risks contaminating audit trails, making it difficult to distinguish between real policy violations and test artifacts during a forensic review.\n*   **Privilege Escalation/Scope:** It is unclear if the warm-up script requires write access or administrative privileges to function. Over-privileged ops scripts represent a significant security vector.\n*   **Production Stability:** If the \"dogfood\" version of the governance rules/engine is unstable (which is the nature of dogfooding), running it hourly against production infrastructure could cause cascading failures or latency spikes for legitimate traffic.\n*   **Alert Fatigue:** If the warm-up fails due to transient dogfood issues, it may trigger high-severity alerts, desensitizing on-call engineers to actual governance failures.\n\n3) REQUIRED_GATES:\n*   **Data Segregation Plan:** Evidence that all logs, metrics, and audit entries generated by this script are explicitly tagged (e.g., `is_synthetic=true`, `source=dogfood`) to ensure they can be filtered out of compliance reports.\n*   **Least Privilege Verification:** Confirmation that the service account executing the script possesses the minimum permissions necessary (ideally Read-Only) and cannot alter production governance policies.\n*   **Resource Impact Analysis:** A load test result showing that the \"warm-up\" process does not consume more than 1% of available CPU/Memory or degrade P99 latency for concurrent real-time governance checks.\n*   **Failure Mode Documentation:** A defined playbook for how the system handles a script failure (e.g., \"fail open\" vs. \"fail closed\") and confirmation that it does not block production operations.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-ea999d2c",
+      "RCPT-21515818",
+      "RCPT-7e2e0f6b"
+    ]
+  }
+}
