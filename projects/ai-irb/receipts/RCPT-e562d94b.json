@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-e562d94b",
+  "createdAt": "2026-02-18T21:21:06Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.2",
+  "latencyMs": 446,
+  "tokensIn": 133,
+  "tokensOut": 771,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}
