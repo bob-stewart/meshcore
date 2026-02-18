@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-5d75f22b",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260218T021957Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Governance path sensitivity:** “Governance engine warm-up” touches decision/control-plane logic; failures can impact authorization, policy evaluation, or compliance enforcement.\n- **Blast radius unclear:** “Hourly dogfood” suggests recurring execution; if misconfigured it can repeatedly trigger incidents (load, retries, cascading failures).\n- **Ops-scripts risk:** Scripts often run with elevated permissions; risk of accidental privilege misuse, unintended side effects, or environment drift.\n- **Availability/performance:** Warm-up may cause CPU/memory spikes, cache churn, DB queries, or lock contention—especially if it runs hourly across multiple nodes.\n- **Failure modes not specified:** What happens if warm-up fails (timeouts, partial initialization, deadlocks)? Risk of noisy alerts or degraded service.\n- **Security/compliance logging:** Warm-up may exercise policy evaluation with sensitive inputs; potential for logging sensitive data or bypassing audit expectations.\n- **Idempotency and concurrency:** Hourly jobs can overlap if runtime exceeds schedule; unclear whether job is idempotent and protected by a lease/lock.\n- **Rollback/disable controls:** No mention of kill switch, feature flag, or rapid disable path if warm-up causes issues.\n- **Evidence is insufficient:** Only an evidence ID is provided; no results, metrics, scope, or test outcomes included.\n\n3) **REQUIRED_GATES:**\n- **Design/intent doc (1–2 pages minimum):**\n  - What “warm-up” does (components touched, calls made, data accessed)\n  - Expected runtime, resource usage, and success criteria\n  - Explicit statement of what it must *not* do (no mutations? no writes? no external calls?)\n- **Safety controls:**\n  - Feature flag / runtime kill switch (and documented on-call procedure to disable)\n  - Concurrency guard (distributed lock/lease) + idempotency guarantees\n  - Strict timeouts + bounded retries with jitter; no infinite retry loops\n- **Least-privilege review:**\n  - Service account/role used by ops-script\n  - Proof it cannot perform unintended writes/admin actions beyond what’s required\n- **Test evidence (attached to EVIDENCE_IDS or linked):**\n  - Unit/integration tests demonstrating no state mutation (or explicitly tested/approved mutations)\n  - Failure-injection tests: dependency down, latency spikes, partial initialization, permission denial\n  - Load/perf test in staging mirroring prod scale: CPU/mem, DB QPS, cache hit rate, p95/p99 latency impact\n- **Progressive rollout plan:**\n  - Canary in a single environment/region/node first; then gradual expansion\n  - Explicit rollback criteria and thresholds\n- **Monitoring & alerting:**\n  - Metrics for warm-up success rate, duration, resource usage, and downstream error rate\n  - Alerts tuned to avoid hourly alert storms (dedupe, thresholding)\n- **Audit/compliance validation:**\n  - Confirm no sensitive policy inputs are logged\n  - Ensure any governance-relevant actions are auditable as expected\n- **Operational readiness:**\n  - Runbook entry: purpose, schedule, disable steps, troubleshooting\n  - On-call signoff that alerts are actionable and ownership is clear\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal operational impact expected from dogfooding, but confirm no unintended resource spikes or interference with production governance flows\n   * Ensure \"warm-up\" mode strictly isolates from live decision-making to prevent false positives/negatives in governance engine\n   * Evidence ID referenced but not reviewed; validate it documents isolation, scheduling, and rollback plan\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260218T021957Z for test logs, isolation proof, and resource projections\n   * Run one manual dogfood cycle in staging with monitoring for CPU/memory/ latency impacts\n   * Confirm ops-scripts changes include idempotency and error-handling for hourly cron\n   * Peer review by governance team lead\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Audit Log Pollution:** Hourly execution of governance checks (\"dogfooding\") risks flooding safety and compliance logs, potentially burying legitimate security incidents or making forensic analysis difficult.\n*   **Production Interference:** If the \"warm-up\" involves heavy compute or locking resources, it could introduce latency or race conditions for actual production traffic.\n*   **Failure Mode Ambiguity:** It is unclear if a failure in the dogfood script (e.g., a failed policy check) will trigger a high-severity incident response (paging humans) or fail silently. False positives could cause alert fatigue.\n*   **Privilege Scope:** The credentials used by the `ops-script` to interact with the `governance` engine create a new attack surface. If the script is over-privileged, it poses a security risk.\n*   **State Mutation:** \"Dogfooding\" often implies end-to-end usage. If this script creates, modifies, or deletes governance policies (even test ones) in the production database, there is a risk of state corruption.\n\n3) REQUIRED_GATES:\n*   **Traffic Segmentation Evidence:** Proof that dogfood traffic is explicitly tagged (e.g., specific headers, distinct service accounts) to ensure it can be filtered out of compliance audits and metrics.\n*   **Read-Only/Ephemeral Confirmation:** Verification that the script either performs read-only operations or operates exclusively on ephemeral test objects that are cleaned up immediately.\n*   **Resource Isolation Test:** Data showing that the warm-up routine operates within a strict, low-priority resource quota and cannot starve production requests.\n*   **Alerting Strategy:** Documentation confirming that script failures route to a low-urgency queue (e.g., ticketing) rather than paging on-call engineers, unless the governance engine is confirmed down.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-fc0f1376",
+      "RCPT-202d658c",
+      "RCPT-12774b9c"
+    ]
+  }
+}
