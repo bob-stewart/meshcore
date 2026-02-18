@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-8b426211",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260218T171957Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: HIGH**\n\n2) **CONCERNS**\n- **Governance correctness risk:** A “warm-up” path can accidentally execute real policy evaluation/enforcement logic and impact authorization, approvals, or compliance decisions if not strictly isolated.\n- **Scope ambiguity (“dogfood”):** Unclear whether this runs against production data, production policy sets, or uses elevated credentials; dogfood jobs often drift into prod-like access.\n- **Hourly cadence amplification:** Any bug, leak, or performance regression repeats frequently, increasing blast radius and operational load.\n- **Resource/availability impact:** Warm-up could create thundering-herd patterns (e.g., hourly synchronized executions), cache churn, DB/queue pressure, or lock contention in governance services.\n- **Security & secrets handling:** Ops-scripts commonly embed or retrieve credentials; risk of over-privileged tokens, accidental logging of secrets, or misuse of service accounts.\n- **Data exposure/PII:** If the warm-up touches real tenant objects/policies/audit records, it may create new access paths and additional data egress/logging.\n- **Auditability & traceability:** Governance changes require strong provenance—who triggered what, what policies were loaded, what artifacts were produced.\n- **Failure modes:** If warm-up fails, does it page/on-call? Does it degrade mainline governance? Could it poison caches or write corrupted state?\n- **Change management gaps:** “ops-scripts” changes can bypass standard review/testing and deploy out-of-band.\n\n3) **REQUIRED_GATES**\n- **Design clarification (required):**\n  - Written spec of what “warm-up” does (read-only vs read/write), what endpoints are called, what data/policies are accessed, and what state/caches are modified.\n  - Explicit statement of environments impacted (dev/stage/prod) and whether any production tenant data is touched.\n- **Safety isolation guarantees:**\n  - Proof the warm-up is **non-enforcing** (cannot change authorization outcomes) or is **strictly sandboxed** (separate service account, separate policy snapshot, no write paths).\n  - Idempotency and “no side effects” tests; if writes are unavoidable, enumerate them and add compensating controls.\n- **Access control / least privilege:**\n  - Service account policy showing minimal permissions; no human-admin tokens; no wildcard tenant scope.\n  - Secret management review (where stored, rotation, logging redaction).\n- **Load/performance validation:**\n  - Staging load test approximating hourly schedule (including concurrency), with defined budgets (CPU/mem/DB QPS/latency) and acceptance criteria.\n  - Jitter/backoff strategy to prevent synchronized spikes; rate limits and circuit breakers.\n- **Observability and operational readiness:**\n  - Metrics and logs for warm-up runs (success/failure, duration, resources, calls made) with dashboards.\n  - Alerting policy that avoids noisy paging but detects sustained failures or resource impact.\n- **Rollout controls:**\n  - Canary rollout (small subset / single region / single tenant) with explicit success criteria.\n  - Feature flag or kill switch to disable warm-up immediately without redeploy.\n  - Documented rollback plan and on-call runbook.\n- **Governance/compliance review:**\n  - Confirmation that audit logs record the warm-up identity and actions, and that this does not violate data minimization/retention rules.\n  - If production data is touched: privacy review and DPIA-style assessment (what data, why needed, retention).\n- **Code quality gates:**\n  - Peer review for ops-scripts (at least 2 reviewers if it can affect prod governance).\n  - Unit/integration tests covering failure cases (timeouts, partial failures, cache poisoning, retries).\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential for unintended resource spikes from hourly scheduling on shared ops infrastructure\n   * Risk of governance engine misfiring on dogfood data if warm-up logic lacks safeguards (e.g., dry-run mode)\n   * Dependency on ops-scripts stability; changes could cascade to other cron/scheduled jobs\n   * Lack of visibility into dogfood dataset (e.g., confirmation it's fully synthetic/internal)\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260218T171957Z for logs confirming no prod leakage, error rates <1%, and resource usage baselines\n   * Dry-run simulation of 24-hour cycle on staging env with metrics (CPU/mem <5% overhead)\n   * Code review of ops-scripts/governance changes for isolation (e.g., explicit dogfood-only flags)\n   * Confirmation dogfood data is 100% synthetic (no PII/prod subsets)\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** LOW\n\n2) **CONCERNS:**\n*   **Audit Log Pollution (Defensibility):** High-frequency (hourly) synthetic traffic entering the governance engine creates noise in safety logs. This complicates the ability to generate clean compliance reports or conduct forensics on actual adversarial attacks.\n*   **Dataset Contamination:** If the \"dogfood\" inputs involve simulated policy violations (to test the filter), there is a risk these inputs could be inadvertently swept into future fine-tuning datasets, teaching the model to ignore safety protocols or recognize violations as standard traffic.\n*   **Alert Fatigue:** If the warm-up script fails (e.g., due to a network timeout), it must be distinguished from a critical failure of the governance engine itself to prevent unnecessary paging of on-call safety engineers.\n\n3) **REQUIRED_GATES:**\n*   **Telemetry Segregation Verification:** Evidence that all requests generated by this script are tagged with a distinct identifier (e.g., `traffic_type: synthetic` or `source: dogfood`) that propagates through to the final audit logs.\n*   **Payload Disclosure:** A list of the specific prompts/inputs used in the warm-up. If the script uses adversarial inputs to test the \"block\" function, these must be statically defined and reviewed to ensure they do not violate internal workplace safety standards if viewed by human annotators.\n*   **Training Exclusion Confirmation:** Confirmation that the data pipeline explicitly excludes records tagged with this source ID from future model training or evaluation sets.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES\n\n*Reasoning: While the operational risk is low, the defensibility risk is non-zero. We cannot approve a change that mixes synthetic governance tests with live traffic without explicit confirmation of how the logs will be segregated. Please update the proposal to confirm the tagging strategy.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-cc9a7e5f",
+      "RCPT-824f5c4d",
+      "RCPT-ebe7654a"
+    ]
+  }
+}
