@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-1323ede3",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260219T041956Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: HIGH**\n\n2) **CONCERNS:**\n- **Governance surface is high-impact:** Any automation touching “governance engine” can affect policy evaluation/enforcement paths; failures or misconfigurations can lead to **policy bypass**, incorrect allow/deny, or inconsistent governance decisions.\n- **Hourly cadence increases blast radius:** Repeated execution amplifies the impact of a bad change (e.g., runaway jobs, repeated misconfig, continuous degraded state).\n- **Warm-up behavior ambiguity:** “Warm-up” can still trigger side effects (cache priming, fetching policy bundles, rotating keys/tokens, loading rules, calling privileged APIs). If not strictly read-only, risk escalates.\n- **Ops-scripts risk profile:** Scripts often run with elevated permissions, weaker type-safety, and ad-hoc deployment practices; they are a common source of **secrets leakage**, injection issues, or environment drift.\n- **Resource/performance regression risk:** Hourly warm-ups could cause CPU/memory spikes, lock contention, thundering herd patterns across nodes, or increased load on policy stores/DBs.\n- **Observability/alerting noise:** If failures are expected during warm-up or transient conditions, it may generate alert fatigue or mask real incidents.\n- **Change-management / rollback clarity:** It’s unclear whether there is a fast, centralized kill switch or rollback plan if the job causes harm.\n- **Security & access control:** Unclear whether the job uses least-privilege credentials, how secrets are stored, and whether execution is audited.\n- **Governance correctness risks:** Cache invalidation and warm-up ordering can cause **stale policy**, inconsistent decisions across instances, or partial updates.\n\n3) **REQUIRED_GATES:**\n- **Precise spec of “warm-up” semantics**\n  - Written definition of all external calls, data touched, and explicit statement of **no side effects** (or explicit, reviewed side effects).\n- **Least-privilege and secrets handling review**\n  - IAM/ACL review showing minimal permissions; secrets sourced from approved secret manager; no secrets in logs/env; rotation compatibility.\n- **Safety controls**\n  - Global kill switch / feature flag to disable job immediately.\n  - Rate limiting + backoff + jitter to prevent synchronized load spikes.\n  - Hard timeouts and bounded retries; idempotency guarantees.\n- **Pre-prod validation**\n  - Run in staging with production-like data volume and policy set; demonstrate no policy changes and no writes (if intended read-only).\n- **Canary + phased rollout**\n  - Start with a small subset of nodes/tenants; explicit success metrics; automatic rollback criteria.\n- **Observability and auditability**\n  - Metrics: execution duration, success/failure rate, downstream call rates, CPU/mem, cache hit rate impact, governance decision latency.\n  - Structured logs with correlation IDs; audit logs for any governance-relevant actions.\n  - Alert thresholds tuned to avoid noise; runbook for failures.\n- **Negative testing / fault injection**\n  - Simulate downstream dependency failures (policy store unavailable, latency spikes, auth failures) and confirm behavior degrades safely.\n- **Performance impact evidence**\n  - Benchmark or load test showing acceptable overhead at hourly frequency; confirm no thundering herd behavior across fleet.\n- **Rollback plan**\n  - Documented revert procedure (disable schedule, revert scripts, clear caches if needed) with owner/on-call responsibility.\n- **Code review + secure scripting practices**\n  - Linting/static checks for shell/python scripts, safe subprocess usage, input sanitization, pinned dependencies, and reproducible deployment.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential for unintended resource consumption from hourly scheduling on shared ops infrastructure\n   * Risk of governance engine warm-up triggering false positives/negatives in dogfood logs that could confuse monitoring\n   * Need to confirm isolation from production governance surfaces\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260219T041956Z for logs confirming no errors, resource spikes, or prod leakage during test runs\n   * Manual verification of dogfood-only execution (e.g., env vars, namespaces) via ops-scripts diff\n   * Simulate 24-hour run in staging to measure CPU/memory impact (<5% overhead threshold)\n   * Sign-off from governance team lead on warm-up payload safety\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Operational Denial of Service (DoS):** Applying governance logic to `ops-scripts` on an hourly basis creates a risk where a false positive in the governance engine could block critical maintenance or deployment scripts, effectively locking engineers out of the system.\n*   **Audit Log Pollution:** High-frequency \"warm-up\" runs may flood compliance logs with internal test data, degrading the signal-to-noise ratio and making it harder to detect genuine external safety incidents.\n*   **Alert Fatigue:** If the dogfooding process triggers standard violation alerts, on-call staff may become desensitized to governance warnings, leading to slower reaction times for real threats.\n*   **Circular Dependency:** If the governance engine relies on these ops scripts to function, and the governance engine blocks the ops scripts, a deadlock could occur.\n\n3) **REQUIRED_GATES:**\n*   **Shadow Mode Confirmation:** Evidence that the governance engine will run in \"Dry Run\" / \"Shadow\" mode (logging verdicts without enforcing blocks) for this specific cron job.\n*   **Telemetry Segregation:** Proof that logs and alerts generated by this job are tagged distinctively (e.g., `source:dogfood`) and do not trigger PagerDuty/high-severity incident flows.\n*   **Resource Capping:** Configuration showing strict CPU/Memory limits for the warm-up process to ensure it does not degrade latency for production inference requests.\n*   **Fail-Open Verification:** Documentation confirming that if the warm-up job fails or hangs, it does not impact the availability of the core governance API.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-930f14d3",
+      "RCPT-eca1e92c",
+      "RCPT-eeeaff22"
+    ]
+  }
+}
