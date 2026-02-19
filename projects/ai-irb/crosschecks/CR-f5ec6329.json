@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-f5ec6329",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260219T001955Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: HIGH**\n\n2) **CONCERNS:**\n- **Governance surface is safety-critical**: “warm-up” jobs can accidentally exercise **policy evaluation / enforcement paths** that impact access control, approvals, or compliance behavior.\n- **Ambiguity of “warm-up”**: unclear whether this is **read-only cache priming** vs. executing real governance workflows that mutate state (tickets, grants, revocations, policy snapshots).\n- **Ops-scripts risk**: cron/automation scripts often run with **broad credentials**; a mistake can create **system-wide blast radius**.\n- **Hourly cadence increases blast probability**: if there’s a bug, it will repeatedly trigger; also risks **overlapping runs** and cascading failures.\n- **Resource/SLO impact**: repeated warm-ups can cause **load spikes** (DB, policy engine, queue backlogs), degrade latency, or starve production workloads.\n- **Data handling / leakage**: warm-up might pull sensitive policy/user/resource metadata into caches/logs; risk of **over-logging** or **cache exposure**.\n- **Idempotency and side effects**: any non-idempotent step (creating artifacts, writing audit events, updating “last seen”, etc.) can accumulate noise or cost.\n- **Audit/compliance integrity**: governance systems often require **explainability and audit trails**; warm-up actions must not pollute or confuse audit logs.\n- **Rollback and kill-switch**: hourly automation needs a reliable **off switch**; unclear if there is rapid disablement on anomaly.\n\n3) **REQUIRED_GATES (before approval):**\n- **Explicit technical spec** defining:\n  - What “warm-up” does/does not do (cache priming only vs. workflow execution)\n  - Exact endpoints/components touched\n  - Whether it **reads** or **writes** any state; enumerate all possible side effects\n- **Principle of least privilege**:\n  - Dedicated service account with **minimal permissions**\n  - Separation from prod-admin credentials; scoped tokens; rotation plan\n- **Safety mode / dry-run**:\n  - Demonstrate the job can run in a **non-mutating mode** (or prove no writes occur)\n  - If any writes are necessary, require explicit allowlist and justification\n- **Idempotency + concurrency controls**:\n  - Locking or single-flight to prevent overlapping runs\n  - Clear handling of partial failures/retries to avoid repeated side effects\n- **Testing evidence** (tied to `EVIDENCE_IDS: 20260219T001955Z`):\n  - Unit/integration tests covering “warm-up” paths\n  - End-to-end test in staging that verifies **no policy/enforcement changes** and no unintended artifacts created\n- **Performance and load testing**:\n  - Measure DB/QPS/CPU/memory impact; confirm within agreed budgets\n  - Demonstrate no material impact on governance engine latency/SLOs\n- **Observability requirements**:\n  - Metrics: run duration, error rate, key dependency latencies, cache hit rate impact\n  - Alerts on failures, runtime anomalies, and dependency saturation\n  - Logs scrubbed for sensitive data; sampling strategy\n- **Operational controls**:\n  - Feature flag / kill switch with documented on-call procedure\n  - Rollback plan and clear owner/on-call responsibility\n  - Runbook and escalation criteria\n- **Security/privacy review**:\n  - Confirm no new sensitive data persistence in caches/logs\n  - Threat model focused on governance bypass/escalation vectors introduced by the job\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   - Potential for resource exhaustion if hourly runs scale poorly under load (e.g., CPU/memory spikes in ops-scripts).\n   - Unclear if \"warm-up\" includes real governance decisions that could trigger unintended alerts or logs.\n   - Dependency on EVIDENCE_IDS for validation; without review, could mask misconfigurations in governance module.\n3) REQUIRED_GATES:\n   - Manual review of EVIDENCE_IDS:20260219T001955Z logs/output to confirm no errors or anomalies in initial run.\n   - Performance monitoring: Run synthetic load tests on affected surfaces (ops-scripts, governance) for 24h to measure impact (e.g., <5% CPU overhead).\n   - Dry-run validation: Execute 3-5 hourly cycles in non-prod (staging/dev) env with alerts on failures.\n   - Sign-off from ops lead on script idempotency and rollback plan.\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n*   **Audit Log Pollution:** The Governance engine is a critical compliance surface. Injecting hourly synthetic traffic risks polluting audit trails, making it difficult to distinguish between real policy enforcement and \"warm-up\" activities during a forensic review.\n*   **Resource Contention:** There is a risk that the \"warm-up\" process could consume rate limits or compute resources needed for live production traffic, potentially introducing latency to legitimate safety checks.\n*   **Alert Fatigue:** If the warm-up involves simulating policy-violating payloads to exercise the engine, it may trigger false positive alerts to the Trust & Safety or Security Operations teams.\n*   **State Corruption:** If the governance engine maintains state (e.g., reputation scores, ban lists), repeated testing against a specific internal user/entity could inadvertently trigger a permanent ban or degrade the reputation score of the test account, breaking the test loop.\n\n3) **REQUIRED_GATES:**\n*   **Data Segregation Plan:** Evidence that all logs/telemetry generated by this script are tagged (e.g., `traffic_type=synthetic` or `source=dogfood`) and can be easily filtered out of compliance reports.\n*   **Latency Impact Analysis:** A pre-deployment test showing that the warm-up routine does not increase P99 latency for concurrent production governance requests.\n*   **Alert Suppression Verification:** Confirmation from the Security Operations team that the specific signature of this traffic is whitelisted in alerting systems to prevent on-call paging.\n*   **Identity Isolation:** Confirmation that the script uses a dedicated service account with scoped permissions, not a shared admin credential or a human user's identity.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**\n\n*Reasoning: While keeping the engine warm is operationally sound, the proposal lacks detail on how the resulting data will be kept separate from legal/compliance audit trails. We cannot approve automated interaction with the Governance surface without a confirmed strategy to prevent log pollution.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-43644cd7",
+      "RCPT-1bde230b",
+      "RCPT-fd43bd4b"
+    ]
+  }
+}
