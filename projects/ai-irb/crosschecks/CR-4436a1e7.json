@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-4436a1e7",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260219T221956Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Ambiguous blast radius**: “governance engine warm-up” could accidentally exercise real enforcement paths (policy evaluation, approvals/denials, credential fetching, writes to config stores) rather than a safe no-op.\n- **Risk of unintended side effects**: Warm-up jobs sometimes trigger cache fills, schema migrations, background reconciliations, or “self-heal” behaviors that can mutate state.\n- **Operational load / cascading failure**: Hourly execution across environments/regions may amplify latency, CPU, DB/query load, or external API usage; could degrade governance services or dependent systems.\n- **Privilege and access concerns**: Ops-scripts running governance logic may require elevated permissions; risk of privilege misuse or secret exposure if not tightly scoped.\n- **Insufficient evidence**: Only an evidence ID is provided; no description of exact commands, environments targeted, or whether it is read-only/dry-run.\n- **Safety controls unclear**: No mention of rate limiting, timeouts, circuit breakers, or automatic disablement if errors spike.\n- **Auditability**: Need clarity on logging, traceability, and whether logs might capture sensitive policy/identity data.\n\n3) **REQUIRED_GATES:**\n- **Design/spec gate**\n  - Precise description of what “warm-up” does (code path, read vs write, external calls), and a list of touched resources (DBs, caches, policy stores, secret managers).\n  - Explicit statement and proof that the job is **side-effect free** (or enumerated allowable side effects).\n- **Safety-by-construction**\n  - Implement **dry-run/read-only mode** (or equivalent) enforced in code/config, not just by convention.\n  - **Idempotency** guarantee and verification (reruns do not change state).\n  - **Least-privilege execution**: dedicated service account; documented permissions; no broad admin tokens.\n  - **Timeouts / resource limits** (CPU/mem), concurrency limits, and backoff/jitter to avoid thundering herd.\n- **Testing & validation**\n  - Staging test run demonstrating: no writes (or only explicitly allowed writes), acceptable latency, and acceptable load.\n  - Failure-mode tests: downstream dependency unavailable, partial outages, stale cache, policy store errors—confirm it fails safe and doesn’t block governance.\n  - Security review of ops-script handling of secrets and logs (no sensitive data in stdout/central logs).\n- **Rollout controls**\n  - Canary rollout (single env/region first) with defined success metrics before expanding.\n  - Clear **rollback/disable** mechanism (feature flag / kill switch) with on-call runbook.\n- **Monitoring & alerting**\n  - Metrics dashboards: runtime, error rate, dependency call volume, cache hit/miss, governance service latency impact.\n  - Alerts with thresholds and automated suspension criteria (e.g., disable job after N consecutive failures).\n- **Audit/compliance**\n  - Audit log entries for job executions (who/what/when/version), retention policy, and link to change record.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Audit Log Pollution:** Running a governance script hourly creates significant noise in safety logs. This risks obscuring genuine safety incidents or adversarial attacks behind a wall of \"dogfood\" traffic.\n*   **Unintended Remediation:** If the governance engine has active enforcement capabilities (e.g., auto-banning users, revoking tokens, deleting content), there is a risk the dogfood script could trigger false positives and disrupt production operations.\n*   **Data Hygiene:** It is unclear if the \"warm-up\" payloads use sampled production data (PII risk) or synthetic data.\n*   **Alert Fatigue:** If the warm-up script encounters minor errors, it could desensitize the on-call team to alerts coming from the governance engine.\n\n3) REQUIRED_GATES:\n*   **Traffic Tagging:** Implementation of distinct metadata (e.g., `source: dogfood-synthetic`) on all requests to ensure they can be filtered out of compliance audits and safety metrics.\n*   **No-Op / Read-Only Verification:** Evidence that the script is configured to run in a \"dry-run\" mode or against a non-production tenant, ensuring it cannot mutate production state (writes/deletes).\n*   **Data Sanitization Check:** Confirmation that input payloads are purely synthetic and contain no customer PII.\n*   **Failure Mode Analysis:** Documentation showing that if the script fails or hangs, it does not degrade the availability of the governance engine for real traffic.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**\n*   *Rationale:* While warming up the engine is operationally sound, doing so on the `governance` surface requires strict isolation to prevent compromising the integrity of safety logs and enforcement actions. We need explicit proof of traffic tagging and state isolation before approval.",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-e0d86334",
+      "RCPT-b7a0b4d3",
+      "RCPT-4c5fb036"
+    ]
+  }
+}
