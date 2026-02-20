@@ -1,0 +1,10 @@
+{
+  "id": "FIND-ac856cab",
+  "caseId": "IRB-949bd653",
+  "createdAt": "2026-02-20T21:20:54Z",
+  "crosscheckReportId": "CR-6df24fab",
+  "converged": false,
+  "summary": "Not converged",
+  "dissent": "Panel did not converge or required provider errored.",
+  "recommendation": "Escalate to Chair"
+}
