@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-31fc2605",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260220T051957Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n- **Privilege/scope risk**: “governance engine warm-up” often requires elevated access; an ops-script could unintentionally execute more than a no-op (e.g., triggering policy evaluation, cache writes, or side effects).\n- **Ambiguous “warm-up” semantics**: Unclear whether this is purely read-only (cache priming) or mutating (stateful initialization, policy refresh, key/material load, etc.).\n- **Frequency/load amplification**: Hourly execution can create steady background load; if the warm-up path is expensive or fans out, it can degrade governance service SLOs or downstream dependencies.\n- **Blast radius from automation**: Ops scripts run unattended; misconfiguration could propagate widely (wrong environment, wrong tenant, wrong policy set).\n- **Governance correctness/consistency**: Warm-up could lock in stale policy/cached decisions if invalidation/refresh behavior is imperfect.\n- **Observability/audit gaps**: If not logged/attributed, this can look like real governance activity and complicate incident response and compliance auditing.\n- **Failure mode risks**: Repeated failures (e.g., auth, dependency outage) could cause noisy alerts, retries, or thundering herd behavior.\n\n3) REQUIRED_GATES:\n- **Precise design/spec** of what “warm-up” does (read-only vs write), which endpoints/components it touches, and expected runtime/cost.\n- **Least-privilege review**: documented service account/role permissions; prove it cannot perform policy writes or enforcement actions unless explicitly intended.\n- **Side-effect safety test**: evidence from staging that warm-up does not change governance state, policy versions, or decision logs beyond expected “warm-up” telemetry.\n- **Load/perf validation**: benchmark in staging with production-like data; quantify CPU/memory/QPS impact and downstream calls; establish acceptance thresholds.\n- **Canary rollout plan**: start at reduced cadence and/or limited scope (single region/tenant), with automatic rollback criteria.\n- **Failure handling**: explicit timeouts, backoff, retry limits, and circuit breaker behavior; demonstrate no thundering herd on dependency failure.\n- **Monitoring & alerting**: dashboards and alerts for warm-up success rate, latency, resource usage, and downstream error rates; clearly tagged/attributed logs.\n- **Change management artifacts**: runbook, on-call ownership, rollback/disable switch (feature flag or config), and post-deploy verification steps.\n- **Security review**: confirm secrets handling, network egress, and that warm-up cannot be exploited to probe governance internals.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential for minor resource overhead from hourly execution (CPU/memory spikes).\n   * Risk of governance engine triggering unintended alerts or state changes during warm-up.\n   * Dependency on ops-scripts reliability; failure could lead to incomplete warm-ups without notification.\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260220T051957Z for logs showing successful dry-runs, resource usage metrics (<5% avg CPU), and no false positives in governance alerts.\n   * Confirm monitoring/alerting in place for warm-up failures (e.g., Slack/ PagerDuty integration).\n   * Test in staging/non-prod for 24h cycle to validate stability.\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Audit Trail Integrity (Defensibility):** High-frequency \"dogfooding\" on the governance engine risks polluting production compliance logs with synthetic data. If the governance engine is used for legal or safety auditing, mixing test traffic with live traffic compromises the defensibility of our safety reporting.\n*   **Alert Fatigue:** If the warm-up script utilizes adversarial prompts to test the engine, it may trigger false positive safety alerts, desensitizing the human review team or on-call responders.\n*   **State Mutation:** There is a risk that the \"warm-up\" might inadvertently update dynamic policy weights or anomaly detection baselines if the engine utilizes online learning.\n*   **Resource Contention:** Running hourly scripts against the governance layer (which is often a latency bottleneck) could degrade performance for live user traffic if not properly throttled.\n\n3) **REQUIRED_GATES:**\n*   **Traffic Segmentation:** Evidence that all requests generated by this script are explicitly tagged (e.g., via headers or metadata) and strictly filtered out of compliance reports and safety audit logs.\n*   **Payload Safety Review:** Verification that the \"warm-up\" payloads are static, sanitized, and do not contain PII or content that triggers high-severity incident response workflows.\n*   **Non-Blocking Failure Mode:** Confirmation that if the warm-up script fails, it fails silently or to a low-priority queue, rather than blocking the deployment pipeline or triggering a SEV-1 incident.\n*   **Read-Only Verification:** Technical guarantee that the script interacts with the governance engine in a read-only capacity and cannot alter policy configurations or ban lists.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES\n\n*Reasoning: While operational warm-ups are standard, applying them to the Governance surface requires strict data hygiene. We cannot approve until there is explicit confirmation that this synthetic traffic will not degrade the accuracy of our safety compliance records.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-436f76f6",
+      "RCPT-b5a85dfe",
+      "RCPT-976d48c3"
+    ]
+  }
+}
