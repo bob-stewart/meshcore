@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-e2f77a34",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260221T223802Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Blast radius unclear:** “Hourly dogfood” can unintentionally become a production-facing workload if misconfigured (wrong environment/credentials/targets).\n- **Governance side effects:** A “warm-up” that touches governance logic may inadvertently **mutate state** (policy caches, approvals, audit logs, enforcement toggles) rather than remaining read-only.\n- **Privilege & credential handling:** Ops scripts often run with elevated permissions; warm-up could become an **attack surface** or a path to privilege misuse if tokens/secrets are mishandled.\n- **Rate limits / cost / availability:** Hourly execution could add **steady-state load**, trigger API rate limits, or degrade governance engine latency for real requests.\n- **Noise in auditability:** Dogfood runs may **pollute audit logs/metrics**, obscuring true incidents or compliance signals.\n- **Failure modes & retries:** If the job fails and retries aggressively, it can create a **thundering herd** or cascading failures.\n- **Undefined success criteria:** “Warm-up” benefit is not quantified; unclear what problem is being solved and whether this is the safest approach.\n\n3) **REQUIRED_GATES:**\n- **Design clarification (written):**\n  - Exact operations performed (read-only vs stateful), target systems, and environment boundaries.\n  - Explicit statement of **non-mutating guarantees** (or documented acceptable mutations).\n- **Least-privilege review:**\n  - Token/role used by the script with a permissions diff showing minimal required access.\n  - Secret storage/rotation mechanism and confirmation no secrets appear in logs.\n- **Staging validation:**\n  - Run in staging for ≥1 week (or sufficient cycles) with recorded metrics: latency impact, error rate, and resource usage.\n- **Canary rollout plan:**\n  - Initial low-frequency run (e.g., daily) and/or limited scope, then step up to hourly after meeting SLO thresholds.\n- **Safety controls:**\n  - Hard environment allowlist (explicit prod vs non-prod behavior).\n  - Circuit breaker / kill switch; max runtime; bounded retries/backoff; concurrency limit (single-flight).\n- **Observability & alerting:**\n  - Dedicated metrics and log tags to separate dogfood traffic from real governance activity.\n  - Alerts on error-rate spikes, latency regressions, rate-limit events, and unexpected state changes.\n- **Change-management evidence tied to EVIDENCE_IDS (20260221T223802Z):**\n  - Code review references, test results, and an operational runbook (including rollback steps).\n- **Rollback readiness:**\n  - Verified ability to disable the scheduled job quickly (config flag or scheduler toggle) and revert script changes.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   - Hourly cadence could introduce minor resource overhead (CPU/memory/logs) on ops/governance surfaces if not optimized.\n   - Risk of false positives in governance alerts during warm-up if not isolated from production paths.\n   - Dogfooding is internal but ensure no unintended propagation to user-facing or external systems.\n3) REQUIRED_GATES:\n   - Review EVIDENCE_IDS: 20260221T223802Z for code diffs, confirming isolation (e.g., dry-run mode, no real actions).\n   - Metrics baseline: Pre/post resource usage and log volume from first 24h run.\n   - Staging test: Simulate 24h hourly runs in non-prod env, verify no side effects.\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n\n2) CONCERNS:\n*   **Audit Log Pollution:** Synthetic traffic entering the governance engine risks skewing safety metrics, compliance reporting, or triggering false-positive safety violations if not properly segregated.\n*   **Resource Contention:** There is a minor risk that hourly warm-up spikes could coincide with peak organic traffic, causing latency in actual user request processing.\n*   **Alert Fatigue:** If the warm-up script fails (e.g., due to network transient issues), it must not trigger high-severity incidents (SEV-1/SEV-2) that wake up on-call engineers unnecessarily.\n*   **Training Data Contamination:** Ensure that the prompts/responses used for warming up the engine are explicitly excluded from any future model fine-tuning pipelines.\n\n3) REQUIRED_GATES:\n*   **Metadata Tagging Verification:** Evidence that all telemetry and logs generated by this script include a distinct tag (e.g., `is_synthetic: true` or `source: dogfood`) to allow filtering in audit tools.\n*   **Resource Impact Analysis:** A comparison of governance engine latency/throughput during a test run of the script versus baseline to confirm zero impact on production traffic.\n*   **Silent Failure Confirmation:** Verification that the script is configured to fail \"softly\" (log only) rather than paging on-call, unless the failure indicates a total system outage.\n\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-cc997b46",
+      "RCPT-dd67bb39",
+      "RCPT-0f18043d"
+    ]
+  }
+}
