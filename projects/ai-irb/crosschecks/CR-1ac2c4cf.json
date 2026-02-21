@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-1ac2c4cf",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260221T203559Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS**\n- **Governance surface impact:** “governance engine warm-up” can inadvertently trigger real policy evaluation/enforcement paths (deny/allow decisions, quarantines, automated actions) if isolation isn’t strict.\n- **Privilege & blast radius:** Ops scripts commonly run with elevated permissions; a scheduled hourly job increases the likelihood and frequency of any misconfiguration causing broad impact.\n- **Side effects vs “warm-up”:** Warm-up routines can mutate caches/state, refresh credentials, precompute policy artifacts, or touch external systems—risking unintended writes or state drift.\n- **Load/availability risk:** Hourly execution may create periodic load spikes on governance services, dependencies (DB/cache/KMS), or policy backends, potentially degrading production performance.\n- **Data exposure in logs/telemetry:** Warm-up may involve representative requests; if using real identifiers or pulling real policy inputs, logs/metrics could leak sensitive data.\n- **Failure mode handling:** If the warm-up job fails, retries could thundering-herd; if it succeeds partially, it might leave inconsistent cached state.\n- **Change control & observability gaps:** Without clear SLOs, alerting, and dashboards, issues could persist unnoticed (especially if it only “warms” and doesn’t break loudly).\n- **Dogfood ambiguity:** “Dogfood” can imply running against production-like data; unclear whether this is prod, staging, or a dedicated dogfood environment.\n\n3) **REQUIRED_GATES**\n- **Design clarification / threat model**\n  - Written description of what “warm-up” does (read-only vs writes), which endpoints/services it hits, and what state it can change.\n  - Threat model covering governance-specific failure modes (accidental enforcement, policy drift, cache poisoning, credential misuse).\n- **Environment & isolation**\n  - Evidence the job runs in a **dedicated dogfood/staging environment** or uses a hard guardrail preventing real enforcement actions in production (e.g., “dry-run only” mode with server-side enforcement disabled).\n  - Explicit safeguards: feature flag + environment allowlist + policy engine “no-op/readonly” capability verified server-side (not only client-side).\n- **Permissions & secrets**\n  - Least-privilege service account review; proof it cannot perform enforcement/write actions (or an explicit allowlist of permissible actions).\n  - Secrets handling review (rotation, storage, access logs).\n- **Testing evidence**\n  - Unit/integration tests demonstrating:\n    - No state mutation (or tightly bounded intended mutations).\n    - Correct handling of failures/timeouts without retry storms.\n    - Idempotency (safe repeated hourly runs).\n  - Load/perf test showing the hourly warm-up stays under defined resource/latency budgets and does not degrade governance SLOs.\n- **Operational controls**\n  - Canary rollout plan (start with low frequency / limited scope), with explicit rollback steps.\n  - Monitoring/alerting: job success rate, duration, error taxonomy, governance service latency, dependency health, and enforcement action counts (should remain zero if dry-run).\n  - Runbook for oncall including disable switch, incident triggers, and investigation steps.\n- **Auditability**\n  - Audit logs showing which calls the warm-up makes, with sensitive fields redacted.\n  - Confirmation that telemetry does not include real user/customer identifiers unless formally approved and minimized.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal operational impact expected from internal dogfooding, but confirm no unintended prod spillover\n   * Hourly cadence could accumulate resource drain if not optimized (CPU/memory/logs)\n   * Governance engine \"warm-up\" must be verified as read-only/noop to avoid false governance triggers\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260221T203559Z for logs confirming no prod effects, error rates <0.1%, resource <1% avg utilization\n   * Dry-run test in staging: 24hr simulation with metrics on latency/resource/governance false positives\n   * Sign-off from ops lead on affected surfaces (ops-scripts, governance)\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n*   **State Mutation Risk:** There is a risk that the \"warm-up\" routine might inadvertently trigger state changes (e.g., policy enforcement actions, token revocations, or account lockouts) rather than simply querying the engine.\n*   **Audit Log Pollution:** Hourly execution against the governance engine may flood security audit logs with synthetic traffic, making it difficult to distinguish between automated warm-up events and genuine security incidents or policy violations.\n*   **Resource Contention:** If the governance engine shares resources with production traffic, an hourly spike in complex policy evaluation (dogfooding) could introduce latency for actual user requests.\n*   **Alert Fatigue:** If the warm-up script fails (e.g., due to a transient network issue), it must be configured to avoid paging on-call engineers for non-critical internal test failures, preventing alert fatigue.\n*   **Internal Lockout:** Since this is \"dogfooding\" (running on internal infrastructure), a bug in the script or the governance rules it triggers could theoretically lock internal operators out of their own systems.\n\n3) **REQUIRED_GATES:**\n*   **Idempotency/Read-Only Verification:** Evidence demonstrating that the warm-up script runs in a \"dry-run\" or \"read-only\" mode and cannot alter the state of the governance database or enforcement layer.\n*   **Log Segregation Plan:** Confirmation that events generated by this script are tagged (e.g., `source: synthetic-warmup`) to allow for easy filtering in SIEM/audit tools.\n*   **Resource Impact Analysis:** A load test result showing the CPU/Memory footprint of the warm-up routine compared to available headroom on the governance nodes.\n*   **Kill Switch Validation:** Documentation of the mechanism to immediately disable the cron/script without a full deployment cycle in case of malfunction.\n*   **Failure Mode Definition:** Confirmation that if the warm-up fails, it does not degrade the availability of the governance engine for external traffic (fail-safe).\n\n4) **RECOMMENDATION: REQUEST_CHANGES**\n\n**Reasoning:** While warming up the engine is a standard operational practice to reduce cold-start latency, touching the **governance** layer requires strict guarantees that the automation is non-mutating and non-disruptive. The current summary does not explicitly confirm that this process is read-only or how it handles audit logging. These protections must be documented before approval.",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-4f461dca",
+      "RCPT-34178d97",
+      "RCPT-83f681f1"
+    ]
+  }
+}
