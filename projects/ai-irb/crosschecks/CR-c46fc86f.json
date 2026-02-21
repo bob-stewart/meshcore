@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-c46fc86f",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260221T193456Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Operational load / cost:** Hourly warm-up may create sustained baseline CPU/memory/IO and cloud spend; risk of capacity regression during peak.\n- **Thundering herd / synchronized scheduling:** If deployed fleet-wide with aligned cron timing, can spike shared dependencies (DB, caches, auth, policy stores).\n- **Governance correctness & side effects:** “Warm-up” can unintentionally mutate state (cache poisoning, precomputations written back, policy snapshotting) if not strictly read-only.\n- **Security & access scope:** Warm-up likely requires privileged governance access; risk of credential exposure in ops-scripts, excessive permissions, or expanded blast radius.\n- **Reliability / failure amplification:** Repeated automated runs can turn a transient dependency issue into continuous alert noise or cascading retries.\n- **Change-control clarity:** “Dogfood” implies internal use—needs explicit separation from production governance decisions to avoid affecting user-facing enforcement.\n- **Observability gaps:** If warm-up is not instrumented, it can mask real cold-start issues or create hard-to-debug periodic incidents.\n- **Rollback/kill-switch:** Without an immediate disable mechanism, hourly jobs can continue causing harm after detection.\n\n3) **REQUIRED_GATES:**\n- **Design spec** clearly stating:\n  - exact purpose (“what is warmed”), **read-only vs write behavior**, and expected steady-state resource usage\n  - which environments are targeted (dogfood only vs prod) and isolation boundaries\n- **Safety controls**\n  - feature flag / config toggle + documented **one-step kill switch**\n  - rate limiting, jittered scheduling, and backoff to avoid synchronized spikes\n  - strict timeouts, circuit breaker behavior, and bounded retries\n- **Least-privilege review**\n  - explicit service account(s), permissions, secret handling, and rotation plan\n  - audit logging enabled for warm-up calls\n- **Performance & capacity evidence**\n  - load test showing impact on governance engine and dependencies at fleet scale (including worst-case hourly alignment)\n  - baseline vs warmed latency/cold-start metrics demonstrating necessity/benefit\n- **Correctness / non-interference tests**\n  - integration tests proving no persistent state mutation (or, if mutation is intended, explicit justification + validation)\n  - cache correctness tests (no cross-tenant or stale policy leakage)\n- **Observability & SLOs**\n  - dashboards/alerts for job success rate, runtime, resource usage, dependency error rates\n  - clear alert routing to avoid noisy paging; runbook for failures\n- **Rollout plan**\n  - staged rollout (single host/canary → small % → full dogfood)\n  - documented rollback criteria and post-deploy verification checklist\n- **Security review sign-off** for ops-scripts changes (code review + static checks for secret leakage)\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal resource overhead from hourly execution on ops-scripts/governance surfaces\n   * Potential for governance false positives/alarms during warm-up if not tuned\n   * Ensure dogfood runs are isolated from production user-facing governance\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260221T193456Z for successful dry-runs, resource metrics, and log excerpts\n   * Confirm idempotency and no state mutation in governance engine via unit/integration tests\n   * Performance baseline: monitor CPU/memory/ latency impact over 24h simulated run\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **State Mutation Risks:** \"Warm-up\" implies activity to prime caches or models. If the governance engine has write-access (e.g., auto-remediation, blocking users, updating policy weights), an hourly automated run introduces a risk of accidental enforcement actions against internal or production entities due to hallucination or script errors.\n*   **Telemetry Pollution:** High-frequency synthetic traffic (dogfooding) may skew safety metrics, making it difficult to distinguish between real adversarial attacks and internal testing noise in audit logs.\n*   **Resource Contention:** Hourly execution of heavy governance logic could compete with live inference traffic for GPU/compute resources during peak windows if not properly prioritized.\n*   **Alert Fatigue:** If the dogfooding inputs include adversarial examples to test the engine, they might trigger high-severity alerts to the Trust & Safety team, desensitizing them to real incidents.\n\n3) REQUIRED_GATES:\n*   **Side-Effect Isolation:** Evidence that the script runs in a `dry-run` mode or a sandboxed environment where it cannot trigger downstream enforcement actions (bans, blocks, config changes).\n*   **Data Segregation:** Confirmation that logs/metrics generated by this script are explicitly tagged (e.g., `source: synthetic-dogfood`) and excluded from production safety compliance reports.\n*   **Payload Review:** A manifest of the inputs used for the warm-up. If using adversarial prompts to test the governance engine, they must be static and approved; if using dynamic generation, bounds must be set.\n*   **Circuit Breaker:** Implementation of a kill-switch that prevents the script from running if production latency exceeds a defined threshold.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**\n\n*Reasoning: While warming up the engine is standard for performance, automating interactions with the `governance` surface requires explicit proof that the script is \"read-only\" regarding enforcement actions and will not pollute the audit trail used for safety defensibility.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-c5a561f8",
+      "RCPT-7938c482",
+      "RCPT-212de53b"
+    ]
+  }
+}
