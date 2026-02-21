@@ -1,0 +1,83 @@
+{
+  "schema": "meshcore.irb.improvement.v1",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-02-21T05:20:42Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ]
+  },
+  "links": {
+    "evidence_bundle": "20260221T051955Z",
+    "case": "IRB-23012797",
+    "findings": "FIND-07641811",
+    "crosscheck": "CR-2cb6d281",
+    "receipts": [
+      "RCPT-01060a55",
+      "RCPT-4c003294",
+      "RCPT-06aafa97"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 1,
+      "error_rate_1h": 0,
+      "median_latency_ms": 399
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 1,
+      "common_disagreements": []
+    },
+    "adverse_events": {
+      "count": 0,
+      "events": []
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260221-05-001",
+      "title": "TBD (auto-generated placeholder) — propose a safe improvement backed by receipts",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "GREEN",
+      "why_now": "Hourly loop running; collect signals and propose bounded improvements.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "up",
+        "confidence": 0.5
+      },
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-01060a55",
+          "note": "See receipts for provider reliability."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "QUEUE_FOR_REVIEW"
+    }
+  ],
+  "routing": {
+    "forums": [
+      {
+        "name": "Advantage Forum",
+        "reason": "learning loop consistency"
+      },
+      {
+        "name": "Ethics Forum",
+        "reason": "severity/escalation semantics"
+      }
+    ],
+    "review_sla_hours": 72
+  }
+}
