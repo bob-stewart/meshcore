@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-4840b8db",
+  "createdAt": "2026-02-21T07:22:01Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "google/gemini-3-pro-preview",
+  "latencyMs": 2403,
+  "tokensIn": 139,
+  "tokensOut": 1760,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}
