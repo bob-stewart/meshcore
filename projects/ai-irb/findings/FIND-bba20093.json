@@ -1,0 +1,10 @@
+{
+  "id": "FIND-bba20093",
+  "caseId": "IRB-58c68f3d",
+  "createdAt": "2026-02-21T10:26:29Z",
+  "crosscheckReportId": "CR-aaaadab9",
+  "converged": false,
+  "summary": "Not converged",
+  "dissent": "Panel did not converge or required provider errored.",
+  "recommendation": "Escalate to Chair"
+}
