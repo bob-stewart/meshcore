@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-520214c8",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260221T001956Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Governance side effects:** “Warm-up” could unintentionally trigger real governance actions (policy enforcement, approvals/denials, state mutations) if not strictly read-only.\n- **Blast radius / frequency:** Hourly execution increases the chance of repeated failure modes, runaway loops, or cumulative state drift.\n- **Operational load:** регуляр warm-ups may add persistent CPU/memory/DB/cache pressure; could amplify peak load or contend with critical jobs.\n- **Permissioning & secrets:** Ops-scripts touching governance systems often require elevated credentials; risk of overbroad permissions or secret exposure in logs.\n- **Audit/compliance impact:** Governance surfaces usually require strong auditability; “dogfood” runs may pollute audit logs or create misleading compliance artifacts.\n- **Failure handling:** Unclear what happens on partial warm-up failures (retries, backoff, paging), and whether failures could degrade governance availability.\n- **Change ambiguity:** The summary is too high-level to assess idempotency, read/write behavior, environments affected, or rollback approach.\n\n3) **REQUIRED_GATES:**\n- **Design clarification (must-have):**\n  - Explicit statement of **read-only vs. read/write** behavior, and a guarantee (with code-level controls) that warm-up cannot perform governance mutations.\n  - Clear definition of **scope** (which tenants/orgs, which policies, which endpoints) and **environment targeting** (prod vs. staging).\n- **Safety controls:**\n  - **Least-privilege service account** with narrowly scoped permissions; evidence of permissions review.\n  - **Idempotency proof** (or demonstrable safe repeatability) for hourly runs.\n  - **Rate limiting / backoff / jitter** to prevent synchronized thundering herd.\n  - **Timeouts and circuit breakers** so warm-up cannot cascade into broader governance instability.\n- **Testing / evidence:**\n  - Staging run results showing **no state changes** (diff-based validation) and acceptable performance impact.\n  - Load/performance assessment: measured **latency/CPU/DB/cache** impact under expected and worst-case concurrency.\n  - Failure-mode tests: simulate dependency outage, partial failures, permission errors; confirm safe degradation and no repeated paging storms.\n- **Observability & audit:**\n  - Dedicated **metrics and logs** tagged as warm-up traffic; dashboards/alerts for error rate, duration, and resource usage.\n  - **Audit log strategy** ensuring warm-up events are either excluded from compliance reporting or clearly labeled to avoid confusion.\n- **Release governance:**\n  - **Canary rollout** (limited scope/percentage) with explicit success criteria and monitoring window.\n  - **Rollback plan** (feature flag or quick disable of the hourly job) and on-call ownership/runbook.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal operational impact expected from dogfooding, but unverified evidence could hide edge cases (e.g., resource spikes or false governance triggers).\n   * Hourly cadence risks cumulative load on governance engine if not throttled.\n   * Affected surfaces (ops-scripts, governance) are sensitive; dogfood isolation must be provable to avoid prod bleed.\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260221T001956Z for >=3 full hourly cycles with zero incidents, metrics (CPU/memory <5% overhead), and no prod interactions.\n   * Code review/diff of ops-scripts changes confirming dogfood-only scope (e.g., sandboxed inputs, dry-run mode).\n   * Post-deploy monitoring: 24h canary with alerts on governance anomalies.\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Audit Log Pollution:** High frequency (hourly) \"dogfood\" traffic interacting with the governance engine risks contaminating compliance and safety audit logs with synthetic/test data, making defensibility difficult during external audits.\n*   **Alert Fatigue:** If the warm-up payload includes borderline or adversarial content to test the engine, it may trigger false positive safety alerts for the on-call team, desensitizing them to real incidents.\n*   **Resource Contention:** There is a risk that the warm-up script could consume rate limits or compute resources needed for legitimate production traffic if not properly throttled or prioritized.\n*   **Credential Management:** Automated scripts interacting with governance surfaces require authentication; improper storage of these credentials in `ops-scripts` presents a security vulnerability.\n\n3) REQUIRED_GATES:\n*   **Data Segregation Plan:** Evidence that all telemetry, logs, and audit trails generated by this script are explicitly tagged (e.g., `source:synthetic` or `env:warmup`) and automatically filtered out of compliance reporting.\n*   **Payload Review:** Disclosure of the specific prompts/inputs used for the warm-up. Confirmation that no PII or prohibited content is used unless strictly contained within a sandbox environment.\n*   **Alert Suppression Verification:** Configuration proof showing that signals generated by this specific script ID will not trigger PagerDuty/incident response workflows.\n*   **Failure Mode Analysis:** Documentation of what happens if the governance engine is down. Does the script fail open (bypassing governance) or fail closed?\n\n4) RECOMMENDATION: **REQUEST_CHANGES**\n\n*Reasoning: While operational maintenance is necessary, interacting with the governance engine requires strict hygiene to preserve the integrity of safety logs. Approval is withheld until a clear mechanism for separating warm-up data from legal/compliance audit trails is demonstrated.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-44d02300",
+      "RCPT-340723cc",
+      "RCPT-674a4a2f"
+    ]
+  }
+}
