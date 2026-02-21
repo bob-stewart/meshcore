@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-3bfd0154",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260221T021954Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Governance-impacting change**: “governance engine warm-up” can inadvertently alter decision paths (e.g., cache priming, policy loading, feature flags) and change enforcement behavior in production-like environments.\n- **Ops-scripts blast radius**: hourly automation can repeatedly trigger failure modes (resource leaks, runaway retries, log/metric floods), turning a minor bug into continuous incident pressure.\n- **Side effects during warm-up**: unclear whether warm-up is strictly read-only (e.g., policy fetch/compile) or could mutate state (e.g., write caches, update registries, rotate tokens, trigger reconciliations).\n- **Load/latency risk**: hourly runs may create periodic load spikes on governance backends, config stores, auth services, or policy distribution systems.\n- **Permissions and credential handling**: ops scripts often run with elevated privileges; warm-up may require sensitive access and expand the attack surface if compromised.\n- **Failure/rollback behavior**: unclear how failures are handled (stop-the-world vs. degrade), and whether there is safe rollback/disable (kill switch).\n- **Auditability/compliance**: governance systems typically require strong traceability; scripted warm-ups could complicate audit trails or generate noisy/ambiguous logs.\n- **Evidence insufficiency**: only an Evidence ID is provided; no change description, diff summary, expected behavior, or test results are included.\n\n3) **REQUIRED_GATES:**\n- **Design/behavior spec** documenting:\n  - What “warm-up” does (exact calls, read/write semantics, caches touched, timeouts, retries).\n  - Expected invariants (must not change policy decisions; must not mutate durable state).\n- **Code review + security review** for ops-scripts and governance integration (least privilege, secret handling, injection safety, dependency pinning).\n- **Idempotency proof/tests**: repeated hourly runs must be safe; no state growth, no duplicated entries, no cumulative cache bloat.\n- **Load/performance tests** demonstrating negligible impact (CPU/mem/network, downstream QPS) and confirming no synchronized thundering herd across instances.\n- **Failure-mode tests**:\n  - Downstream unavailable, partial config, stale policy, auth failures, slow responses.\n  - Confirm bounded retries, backoff, timeouts, and graceful degradation.\n- **Staged rollout plan**:\n  - Canary to a small subset; progressive ramp with explicit success criteria.\n  - Ability to disable quickly (feature flag / config switch) without redeploy.\n- **Monitoring/alerting**:\n  - Metrics for warm-up duration, success/failure rate, downstream error codes, resource usage.\n  - Alerts on anomaly thresholds and repeated failures.\n- **Runbook + on-call readiness**:\n  - How to triage failures, disable job, rollback, and validate governance correctness.\n- **Audit/logging validation**:\n  - Ensure warm-up logs are distinguishable from enforcement logs; do not pollute audit trails.\n  - Verify no sensitive data is logged.\n- **Post-deploy validation**:\n  - Confirm governance decision parity before/after (golden test set / shadow evaluation).\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW  \n2) CONCERNS:  \n   - Potential for minor resource overhead from hourly execution on ops-scripts (e.g., CPU/memory spikes during warm-up).  \n   - Risk of governance engine triggering unintended internal alerts or false positives during dogfooding if not fully idempotent.  \n   - Lack of explicit confirmation that this is isolated to non-production environments.  \n\n3) REQUIRED_GATES:  \n   - Review EVIDENCE_IDS:20260221T021954Z for logs confirming successful dry-runs, no errors, and resource metrics under 5% overhead.  \n   - Manual test: Execute warm-up 3x in staging; verify idempotency and no state changes in governance.  \n   - Post-deploy monitoring: Track first 24h metrics (alerts, latency, resource use) with auto-rollback if anomalies detected.  \n   - Sign-off from ops lead confirming prod isolation.  \n\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Resource Contention:** Running the governance engine (likely a computationally expensive inference or logic layer) on an hourly cadence risks spiking latency or starving resources for live production traffic.\n*   **Audit Log Pollution:** High-frequency \"dogfood\" operations may flood safety and compliance logs, making it difficult to distinguish between internal tests and actual user violations or attacks.\n*   **Self-Denial of Service:** If the warm-up script triggers a false positive or encounters a critical error, there is a risk it could trigger automated lockdown protocols, inadvertently disabling the governance engine for actual users.\n*   **Data Privacy:** The summary does not specify the input data for the \"warm-up.\" If the script replays production traffic or user data to warm the cache, this constitutes an unnecessary privacy risk.\n\n3) **REQUIRED_GATES:**\n*   **Resource Impact Analysis:** Evidence (graphs/metrics) from a staging environment showing that the hourly spike does not degrade P99 latency for concurrent requests.\n*   **Data Isolation Certification:** Confirmation that the input data used for the warm-up is synthetic or strictly isolated internal data, not sampled user PII.\n*   **Telemetry Tagging:** Verification that all logs and metrics generated by this script are tagged (e.g., `is_dogfood: true`) to ensure they are excluded from compliance reporting and safety violation statistics.\n*   **Failure Mode Logic:** Proof that if the warm-up script fails, it fails \"open\" regarding the script (stops the test) but does not impact the availability of the governance engine for production traffic.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-aa30a85e",
+      "RCPT-a0b8fb68",
+      "RCPT-af202d4b"
+    ]
+  }
+}
