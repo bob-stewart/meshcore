@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-cc7dcbab",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260221T183350Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Blast radius of hourly automation:** An hourly job can amplify any bug/misconfiguration into repeated impact (e.g., repeated policy writes, thrash, resource leaks).\n- **Governance surface is high-sensitivity:** “Governance engine warm-up” may touch authorization/policy evaluation paths; errors could cause **access mis-grants**, **access denials**, or inconsistent enforcement.\n- **State mutation ambiguity:** “Warm-up” is often assumed read-only, but may inadvertently **write caches, refresh tokens, rotate keys, update policy/materialized views**, etc. Unclear whether this is strictly side-effect free.\n- **Operational safety of ops-scripts:** Scripts frequently run with elevated permissions; risk of **credential exposure**, **improper secrets handling**, and **unreviewed shell behavior** (env var leakage, unsafe globbing, command injection via inputs).\n- **Load/latency impact:** Hourly warm-up could create periodic load spikes against governance stores, policy engines, databases, or downstream services.\n- **Failure-mode handling:** If warm-up fails, it may create alert noise or, worse, block/slow governance decisions if implemented in-line or contending for shared resources.\n- **Observability/auditability gaps:** Governance-related activity needs strong audit trails; hourly jobs can produce high-volume logs that obscure anomalies.\n- **Change management/rollback:** Insufficient detail on how the job is deployed/disabled quickly if it causes issues (feature flag, kill switch, scheduling control).\n\n3) **REQUIRED_GATES:**\n- **Clear spec of behavior and side effects**\n  - Explicit statement: *read-only vs write*, which APIs/endpoints/data stores are touched, whether it mutates caches/state, and expected QPS/time budget.\n- **Least-privilege access review**\n  - Documented service identity, exact permissions needed, and proof it cannot modify policy/config outside intended scope.\n- **Safety controls**\n  - Feature flag / kill switch to disable warm-up instantly without redeploy.\n  - Rate limiting / concurrency limits to prevent overlap (e.g., ensure one run at a time; no piling up on slow runs).\n  - Strict timeouts and circuit-break behavior to avoid resource contention.\n- **Staged rollout evidence**\n  - Dry-run in staging with representative data.\n  - Canary rollout (e.g., single region/tenant) with explicit success metrics and rollback criteria.\n- **Testing**\n  - Unit/integration tests validating “warm-up” calls are idempotent and do not alter authorization decisions.\n  - Failure-injection tests: downstream unavailable, partial timeouts, permission denied, corrupted cache, etc., demonstrating safe degradation.\n- **Security & secrets handling**\n  - Confirm no secrets in logs; secret sourcing via approved mechanism; script hardening checklist (set -euo pipefail, input sanitization, no shell eval).\n- **Operational readiness**\n  - Monitoring/alerts for: runtime duration, failure rate, impact on governance latency/error rates, downstream load.\n  - Runbook: what to do on failures, how to disable, how to verify recovery.\n- **Audit trail**\n  - Evidence that warm-up activity is identifiable in audit logs (distinct principal/job name), with retention appropriate for governance operations.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**\n\nRationale: The change touches **governance** and introduces **recurring automation**, which is defensible if it’s demonstrably side-effect safe, least-privileged, observable, and rapidly disable-able. The current summary does not provide enough evidence to approve without the gates above.",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal operational impact expected from hourly internal dogfooding, but confirm no resource spikes or latency in governance engine\n   * Ensure warm-up runs are isolated from production policy enforcement to avoid false positives/negatives\n   * Ops-scripts changes could introduce automation drift if not idempotent\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260221T183350Z for logs, metrics, and dry-run results confirming no side effects\n   * Staging test: Run 24-hour simulation in non-prod environment with resource monitoring\n   * Peer code review of affected ops-scripts for idempotency and error handling\n   * Post-deploy monitoring plan: Alert on first 3 failures or anomalies\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Telemetry Pollution:** There is a significant risk that hourly dogfooding events will be logged as production traffic, skewing safety metrics, false positive rates, and latency statistics for the governance engine.\n*   **Resource Contention:** If the \"warm-up\" involves heavy inference or complex rule evaluation, it could introduce latency or rate-limiting issues for legitimate user traffic occurring simultaneously.\n*   **Alert Fatigue:** If the dogfood inputs are designed to trigger governance blocks (to test efficacy), they may trigger paging alerts for the on-call team, leading to desensitization to real safety incidents.\n*   **Recursion/Feedback Loops:** Since this is an ops-script interacting with governance, there is a risk of infinite loops if the governance engine attempts to govern the warm-up script itself, potentially locking resources.\n*   **Data Leakage:** If the \"warm-up\" uses sampled production data rather than synthetic data, there is a risk of re-exposing PII or sensitive context in a lower-security logging environment.\n\n3) REQUIRED_GATES:\n*   **Traffic Segmentation Proof:** Evidence that the warm-up traffic is explicitly tagged (e.g., specific headers or metadata) and filtered out of production safety dashboards and KPIs.\n*   **Synthetic Data Verification:** Confirmation that the input data used for the warm-up is purely synthetic or pre-approved static test fixtures, not live or sampled user data.\n*   **Non-Blocking Execution:** Load test results showing that the warm-up script runs at a lower priority (background thread/process) and yields to production traffic immediately upon contention.\n*   **Alert Suppression Configuration:** Configuration diffs showing that alerts generated by this specific `client_id` or `source` are routed to a silent channel or explicitly suppressed in PagerDuty/OpsGenie.\n*   **Fail-Open/Safe Logic:** Evidence that if the warm-up script crashes or hangs, it does not impact the availability of the governance engine service.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**\n\n**Reasoning:** While keeping the governance engine warm to reduce cold-start latency is a valid operational goal, the summary lacks detail on how this traffic is isolated. Modifying the behavior of the primary safety enforcement mechanism (Governance) requires strict proof that the test traffic will not interfere with actual safety enforcement or observability. Please update the proposal with the specific data handling and alert suppression plans.",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-2da9e777",
+      "RCPT-6178962d",
+      "RCPT-5c052221"
+    ]
+  }
+}
