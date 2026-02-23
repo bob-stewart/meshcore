@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-d8cdea62",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260223T192005Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Blast radius from schedule increase**: hourly execution can amplify any bug/misconfiguration (e.g., repeated writes, repeated policy mutations, repeated alerts).\n- **Production load / reliability impact**: “warm-up” may still trigger expensive calls (DB reads, cache fills, policy compilation, remote fetches) and create thundering-herd behavior at the top of the hour.\n- **Governance correctness**: if the warm-up path touches real governance state (policies, assignments, attestations), it could cause unintended side effects or drift.\n- **Privilege / access surface expansion**: ops-scripts + governance implies automation credentials; risk of over-privileged service accounts or secret exposure.\n- **Observability gaps**: if warm-up failures page or flood logs/metrics, it can create noise; if it’s silent, it can mask real readiness issues.\n- **Rollback and failure modes**: unclear whether the job is safe to disable quickly and whether it fails closed vs. open (governance must not degrade to permissive behavior).\n- **Dogfood environment ambiguity**: “dogfood” sometimes runs against production-like data; risk depends heavily on what data and permissions are used.\n\n3) **REQUIRED_GATES:**\n- **Precise spec of behavior**: written statement that warm-up is **read-only** (or, if not, enumerate all writes) and which governance components are exercised.\n- **Idempotency proof**: tests/evidence that repeated hourly runs do not change governance state, create duplicates, or accumulate artifacts.\n- **Load/perf evaluation**: benchmark in staging/prod-like environment showing CPU/mem/DB impact and peak-hour concurrency behavior; include expected QPS and worst-case.\n- **Concurrency control**: evidence of a distributed lock/singleton execution (or jittered scheduling) to prevent multi-run overlap and thundering herd across hosts/regions.\n- **Least-privilege and secrets review**: service account permissions, secret handling, and rotation verified; ensure no human tokens embedded in ops scripts.\n- **Safety guardrails**: explicit timeouts, rate limits, circuit breakers, and “no-op” mode if dependencies are degraded.\n- **Monitoring + alerting plan**: dashboards and SLOs for warm-up success rate, duration, error types, and resource impact; alert thresholds that avoid paging storms.\n- **Rollback plan**: one-step disable/feature-flag with clear owner/oncall, plus runbook.\n- **Canary rollout**: enable in one environment/region first; verify metrics for at least 24–72 hours before full rollout.\n- **Security/privacy check**: confirm no sensitive data is logged during warm-up; log sampling/redaction verified.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential for unintended resource drain on governance engine if warm-up scales poorly hourly\n   * Risk of false positives/negatives in dogfood triggering governance alerts if not tuned\n   * Ops-scripts changes could introduce script errors affecting cron/scheduling reliability\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260223T192005Z for logs confirming no prod impact, isolation to dogfood env, and successful dry-runs\n   * Metrics baseline + post-deploy monitoring plan (CPU/mem/ alert volume for 24h)\n   * Peer code review signoff on ops-scripts diffs\n   * Rollback plan verified (e.g., disable cron job)\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Audit Log Pollution:** The Governance engine is a critical compliance surface. Injecting hourly synthetic traffic risks corrupting the audit trail if these requests are not strictly segregated or tagged as \"synthetic/test.\"\n*   **State Mutation:** There is no confirmation that the \"warm-up\" is read-only. If the warm-up triggers state changes (e.g., quota consumption, policy violation counters), it degrades the integrity of the governance system.\n*   **Failure Modes:** If the ops-script hangs or fails, does it block the governance engine? A failure in a \"warm-up\" script must not result in a \"fail-open\" or \"fail-closed\" state for actual user traffic.\n*   **Credential Management:** Ops-scripts interacting with governance often require elevated privileges. The security context of this script is undefined in the summary.\n\n3) **REQUIRED_GATES:**\n*   **Synthetic Tagging Verification:** Evidence that all logs/telemetry generated by this script are explicitly tagged (e.g., `is_synthetic: true`) to ensure they can be filtered out of compliance audits.\n*   **Idempotency/Read-Only Proof:** Demonstration that the warm-up routine does not alter persistent state (databases, caches, quotas).\n*   **Resource Cap Test:** Evidence that the script execution consumes <1% of available resources and yields priority to live traffic immediately.\n*   **Failure Isolation Test:** Simulation of script failure to prove it does not impact the availability of the governance service.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-38fe128d",
+      "RCPT-7057f7dc",
+      "RCPT-41d85412"
+    ]
+  }
+}
