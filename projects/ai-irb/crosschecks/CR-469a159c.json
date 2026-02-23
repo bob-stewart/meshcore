@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-469a159c",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260223T232228Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** **HIGH**\n\n2) **CONCERNS:**\n- **Governance-path impact:** “Governance engine warm-up” touches a high-trust control plane; failures could affect policy enforcement/decisioning availability or correctness.\n- **Hourly automation risk:** A recurring job can amplify impact (e.g., runaway loops, resource leaks, repeated bad state), turning a small bug into continuous disruption.\n- **Ops-scripts as blast-radius multipliers:** Script changes often bypass stronger SDLC controls; risk of unsafe defaults, brittle error handling, and environment drift.\n- **Warm-up side effects unclear:** If “warm-up” triggers real reads/writes (cache priming, policy compilation, DB migrations, key access), it may:\n  - create unintended **state mutations**\n  - consume **rate limits/quotas**\n  - increase **cost/latency**\n- **Authentication/authorization scope:** The job likely needs elevated permissions; mis-scoping can create a persistent privileged actor.\n- **Secret handling:** Recurring jobs are a common source of credential leakage via logs, env vars, or misconfigured runners.\n- **Observability and accountability:** Governance actions require strong auditability; warm-up actions may muddy audit trails or generate noisy logs that hide real events.\n- **Failure modes:** If warm-up fails, does it page/on-call hourly? If it succeeds but degrades performance, is there detection?\n- **Change justification not evidenced:** Only an evidence ID is provided; no design/risk analysis, rollback plan, or proof it’s side-effect-free.\n\n3) **REQUIRED_GATES:**\n- **Design clarification + threat model**\n  - Document what “warm-up” does (exact calls, read/write behavior, cache keys, DB access, external services).\n  - Explicitly state **must-be side-effect-free** vs allowed mutations, and how that is guaranteed.\n- **Least-privilege and identity controls**\n  - Dedicated service account for the job with minimal permissions.\n  - Proof via IAM policy review + automated permission tests.\n  - Credential storage/rotation plan (no long-lived secrets in scripts).\n- **Safety mechanisms**\n  - Hard **timeout**, **single-flight/lock** (prevent overlapping runs), and **rate limiting**.\n  - Circuit breaker / auto-disable if error rate exceeds threshold.\n- **Testing evidence**\n  - Unit/integration tests confirming **no writes** (or only explicitly intended writes) under normal and error paths.\n  - Load/performance test showing no meaningful degradation when run hourly across expected scale.\n  - Failure-injection test (network errors, partial outages) verifying safe behavior and no cascading retries.\n- **Audit and logging**\n  - Audit events clearly labeled as “warm-up,” with correlation IDs; ensure it does not pollute governance decision logs.\n  - Log redaction validation (secrets/PII).\n- **Rollout plan**\n  - Staged rollout (dev → staging → canary prod).\n  - Feature flag / kill switch to disable immediately without deploy.\n  - Backout/rollback procedure and owner/on-call responsibility.\n- **Monitoring + SLO impact assessment**\n  - Dashboards/alerts for job success, duration, CPU/mem, downstream latency, error rates.\n  - Explicit acceptance thresholds (e.g., max added CPU, max p95 latency change).\n- **Operational review**\n  - Confirm scheduler reliability, retry policy, and paging policy (avoid hourly alert storms).\n  - Verify idempotency and safe retry semantics.\n\n4) **RECOMMENDATION:** **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Potential for unintended resource drain from hourly execution in ops-scripts.\n   * Risk of governance engine warm-up triggering non-dogfood paths or false alerts if not fully isolated.\n   * Lack of explicit details on isolation from production governance surfaces.\n3) REQUIRED_GATES:\n   * Code review of ops-scripts changes confirming dogfood isolation and no production bleed.\n   * Metrics/logs from EVIDENCE_IDS (20260223T232228Z) showing <1% resource impact and zero false triggers over 24h simulation.\n   * Confirmation of monitoring/alerting for warm-up failures or anomalies.\n   * Sign-off from governance team lead on safety of warm-up payloads.\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Audit Log Pollution:** There is a significant risk that hourly synthetic traffic generated by this script will be commingled with genuine user traffic in safety logs. This could skew compliance reporting and safety metrics (e.g., false positive rates).\n*   **Alert Fatigue:** If the \"warm-up\" involves testing boundary cases (e.g., sending toxic prompts to ensure the classifier catches them), it may trigger high-priority alerts for the Trust & Safety team, leading to desensitization.\n*   **Resource Contention:** Running hourly scripts against the governance engine—which is likely on the critical path for all inference—could introduce latency or throttling for production users if not properly rate-limited or prioritized lower than user traffic.\n*   **Feedback Loops:** If the governance engine takes automated punitive actions (e.g., banning IPs or API keys), there is a risk the script could ban itself or the internal IP range if a warm-up test fails or is flagged as malicious.\n\n3) **REQUIRED_GATES:**\n*   **Data Isolation Verification:** Evidence that all telemetry, logs, and audit trails generated by this script are explicitly tagged (e.g., `traffic_type: synthetic` or `source: dogfood`) and excluded from standard compliance dashboards.\n*   **Alert Suppression Test:** Proof that the specific payloads used in the warm-up do not trigger PagerDuty or high-severity incidents for the on-call safety team.\n*   **Resource Impact Analysis:** A load test result showing the governance engine's latency impact during the script's execution window.\n*   **Identity/Auth Review:** Confirmation that the script uses a dedicated service account with specific, scoped permissions, rather than a shared root or admin key, to prevent privilege escalation risks.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES\n\n**Reasoning:** While keeping the governance engine warm to prevent cold starts is operationally sound, the intersection of *automation* and *governance* requires strict hygiene. We cannot approve this until we have explicit confirmation that this traffic will not poison our safety datasets or trigger false alarms for human reviewers. Please update the proposal with the specific tagging strategy used for log isolation.",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-0200e581",
+      "RCPT-f1b148ef",
+      "RCPT-edf9a03c"
+    ]
+  }
+}
