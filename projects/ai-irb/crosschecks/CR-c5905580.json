@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-c5905580",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260223T202020Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- “Governance engine warm-up” is ambiguous; could unintentionally change evaluation/decision behavior (e.g., caching, model loading, policy compilation) rather than purely improving latency.\n- Hourly “dogfood” implies automated recurring execution; risk of repeated side effects (writes, rate-limit pressure, cost blowups, noisy alerts, queue/backlog growth).\n- Touches **governance** surface: any misconfiguration could affect policy enforcement, approvals, access control, or compliance checks.\n- Ops-scripts risk: cron/job drift across environments, credentials exposure, privilege escalation, or running in the wrong tenancy/project.\n- Potential for hidden production coupling: warm-up traffic may hit real downstream services (datastores, key management, policy stores), polluting metrics or causing throttling.\n- Insufficient evidence context: **EVIDENCE_IDS: 20260223T202020Z** is not described; unclear what was tested, where, and with what outcomes.\n- Rollback and fail-safe behavior not specified (e.g., what happens if warm-up fails repeatedly; does it page on-call; does it disable itself).\n\n3) **REQUIRED_GATES:**\n- **Design clarification document** (1–2 pages is fine) stating:\n  - exact actions performed during warm-up (read-only vs write, endpoints touched, data scopes)\n  - expected invariants (must not alter governance decisions; must not persist state; must not affect user-facing outcomes)\n- **Threat model / security review** for ops-script execution:\n  - identity used (least privilege), secret handling, tenancy scoping, and prevention of running against production unintentionally\n- **Non-prod test evidence** linked to the evidence ID:\n  - functional verification that warm-up produces identical governance outputs (before/after) on a fixed policy+request corpus\n  - performance/latency measurements showing need and benefit\n- **Safety tests**:\n  - side-effect audit proving no writes occur (or explicitly enumerated, justified writes)\n  - rate-limit and load test demonstrating hourly execution won’t exceed quotas or degrade downstreams\n- **Observability requirements**:\n  - dedicated metrics (success/failure, duration, downstream error rates), structured logs, and alert thresholds that avoid paging on transient failures\n  - clear runbook for on-call\n- **Rollout plan**:\n  - canary in one environment/region/tenant first\n  - explicit rollback/disable mechanism (feature flag / kill switch) tested\n  - defined success criteria and monitoring window\n- **Compliance/audit alignment**:\n  - confirmation that warm-up traffic is clearly labeled (e.g., user-agent/service tag) and excluded/handled appropriately in audit trails and reporting\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   - Unbounded resource usage from hourly runs could accumulate if failures occur or scaling issues arise\n   - Potential for unintended governance triggers during warm-up if dogfood data mimics real inputs\n   - Dependency on ops-scripts reliability; script failures could cascade to governance stability\n3) REQUIRED_GATES:\n   - Review EVIDENCE_IDS (20260223T202020Z) for run logs, resource metrics, and output validation confirming no anomalies\n   - Confirm circuit breakers or timeouts in ops-scripts to prevent runaway execution\n   - Verify isolation from production governance paths (e.g., dry-run mode only)\n   - Monitor first 24 hours post-deployment for any error rates or perf impacts\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Audit Log Pollution:** There is a significant risk that synthetic \"warm-up\" traffic will be commingled with actual governance enforcement logs, compromising the integrity of compliance audits and safety reviews.\n*   **Resource Contention:** Without explicit throttling, an hourly burst of requests could momentarily lock resources or consume rate limits required for live inference traffic, potentially causing latency in safety checks.\n*   **State Mutation:** It is unclear if the \"warm-up\" is strictly read-only. If the script initializes state, caches, or counters, it could introduce \"ghost\" data that affects subsequent governance decisions.\n*   **Alert Fatigue:** If the warm-up involves simulating policy violations to test the engine, it risks triggering false positive security alerts, desensitizing the Ops team to real threats.\n\n3) REQUIRED_GATES:\n*   **Traffic Segregation:** Evidence that all requests generated by this script are tagged (e.g., specific headers or user agents) and explicitly filtered out of production compliance/audit reporting pipelines.\n*   **Immutability Verification:** Static analysis or trace logs confirming that the script performs `READ` operations only and executes no state-mutating transactions on the governance policy store.\n*   **Load Impact Analysis:** Metrics from a staging run showing the script consumes negligible resources (<1% CPU/Memory) and does not increase latency for concurrent \"real\" governance requests.\n*   **Failure Mode Safety:** Documentation proving that if the ops-script hangs or crashes, it does not block the governance engine or degrade the availability of the inference path (fail-open/fail-safe check).\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-7b9f11e4",
+      "RCPT-76851282",
+      "RCPT-0b6c820c"
+    ]
+  }
+}
