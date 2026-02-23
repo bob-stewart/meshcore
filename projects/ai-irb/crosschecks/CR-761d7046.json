@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-761d7046",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260223T101958Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Unclear blast radius:** “Hourly dogfood” and “warm-up” could touch production-like governance paths; unclear which environments/accounts are affected.\n- **Privilege & access creep:** Ops-scripts invoking governance systems often require elevated permissions; risk of overbroad IAM/ACLs.\n- **Load / cost / throttling risk:** Hourly warm-ups may generate steady background traffic (API calls, DB reads/writes) that can cause rate limiting, noisy-neighbor effects, or unexpected cost.\n- **State mutation risk:** “Warm-up” is sometimes assumed read-only but may create caches, records, or side effects (e.g., policy evaluation artifacts), potentially impacting compliance/audit trails.\n- **Failure-mode ambiguity:** If the warm-up fails, does it page, retry aggressively, or block governance workflows? Risk of alert fatigue or cascading retries.\n- **Idempotency & concurrency:** Hourly schedules can overlap under delays; risk of concurrent executions corrupting caches or creating contention.\n- **Observability gaps:** No evidence provided about metrics/logging/tracing, success criteria, or alerting thresholds for this new periodic job.\n- **Rollback and disablement:** Need an explicit “kill switch” and rollback plan if the warm-up causes incidents.\n- **Compliance posture:** Governance systems are often tied to audits; automated periodic actions need traceability and documented intent.\n\n3) **REQUIRED_GATES:**\n- **Design clarification doc** including:\n  - Exact actions performed during “warm-up” (read-only vs mutating), target services/endpoints, environments, and data touched.\n  - Expected runtime, call volume, and error/retry strategy.\n- **Security review**:\n  - Least-privilege permissions for ops-scripts (scoped roles, no wildcard grants).\n  - Secrets handling (rotation, storage, no plaintext in logs).\n- **Safety controls**:\n  - Global kill switch / feature flag to disable the hourly job quickly.\n  - Concurrency control (lock/leader election) + idempotency guarantees.\n  - Strict rate limits/backoff and bounded retries.\n- **Performance/load evidence**:\n  - Staging load test or replay showing incremental QPS, latency, and resource impact stays within budget.\n  - Confirmation it won’t trigger downstream throttling or SLO regressions.\n- **Observability & ops readiness**:\n  - Metrics (success/failure counts, duration, downstream error codes), structured logs, and tracing where applicable.\n  - Alerting plan with non-paging alerts initially (or carefully scoped paging) + runbook.\n- **Change management**:\n  - Canary rollout plan (e.g., one environment/tenant first) with defined success criteria.\n  - Rollback procedure validated in staging.\n- **Audit/compliance**:\n  - Documented rationale for the periodic action and retention of execution logs sufficient for audit needs.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal resource overhead from hourly execution on ops-scripts/governance surfaces\n   * Potential for unintended side-effects if dogfood payloads trigger non-test governance paths\n   * Lack of context on EVIDENCE_IDS content (e.g., prior run logs, perf metrics)\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS-20260223T101958Z for run history, error rates, and resource usage\n   * Perf/load tests confirming <1% CPU/memory impact over 24h cycle\n   * Confirmation of isolation (no prod data/users affected; sandboxed dogfood only)\n   * Sign-off from ops lead on script idempotency and rollback plan\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n*   **Audit Log Integrity:** High frequency (hourly) \"dogfood\" traffic risks polluting critical compliance and safety logs, making forensic analysis of genuine security incidents difficult or impossible.\n*   **Data Provenance:** It is unclear if \"dogfood\" implies using sampled real user data (privacy risk) or synthetic test vectors. Using production data for operational warm-ups violates data minimization principles.\n*   **Recursive Blocking:** Risk of the governance engine flagging the ops-script as malicious/anomalous, potentially triggering automated lockdowns or banning internal service accounts.\n*   **Alert Fatigue:** If the warm-up fails or triggers a false positive policy violation, it may flood security on-call channels, desensitizing humans to real threats.\n\n3) REQUIRED_GATES:\n*   **Data Source Verification:** Evidence confirming that inputs used for the warm-up are 100% synthetic or pre-approved test vectors, containing no PII or customer content.\n*   **Log Segmentation Strategy:** Demonstration that all telemetry generated by this script is explicitly tagged (e.g., `traffic_type=synthetic` or `source=healthcheck`) to allow instant filtering in compliance audits.\n*   **Non-Blocking Failure Mode:** Proof that a failure in the warm-up script (e.g., timeout) does not degrade the availability of the governance engine for live user traffic.\n*   **Service Account Isolation:** Confirmation that the script runs under a dedicated service account with permissions strictly scoped to this specific health check, preventing lateral movement if compromised.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-7a6a0b5e",
+      "RCPT-2dbbd3e9",
+      "RCPT-8967b9bd"
+    ]
+  }
+}
