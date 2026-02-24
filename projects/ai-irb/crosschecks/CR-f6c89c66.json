@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-f6c89c66",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260224T082005Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n- **Blast radius in “governance” surface:** A warm-up job that touches governance/policy components can accidentally trigger real enforcement paths (policy writes, approvals/denials, revocations) if not strictly read-only.\n- **Privilege and credential exposure:** Hourly ops-scripts often run with elevated credentials; risk of secrets leakage, overbroad IAM, or lateral movement if the script is compromised.\n- **Statefulness / side effects:** “Warm-up” can still mutate caches, queues, rate limiters, locks, or audit logs; could create noise, backpressure, or incorrect cached decisions.\n- **Operational load and cost:** Hourly execution may create periodic load spikes; could degrade governance engine latency/availability or cause thundering herd across instances.\n- **Failure modes and retries:** If the job fails and retries aggressively, it can amplify impact; unclear idempotency guarantees.\n- **Observability gaps:** If not instrumented, it may silently fail or silently alter behavior; auditability is critical for governance systems.\n- **Rollback/disable path:** Need a fast kill switch / feature flag; cron-like jobs can be hard to stop quickly if deployed broadly.\n\n3) **REQUIRED_GATES:**\n- **Design clarification + proof of non-enforcement:** Documentation and code evidence that the warm-up path is **strictly read-only** (no writes, no enforcement actions, no external side effects), including a list of called endpoints/commands.\n- **Least-privilege IAM review:** Demonstrate the job runs with a dedicated identity and minimal scopes (read-only where possible); secrets managed via approved vault mechanism; no long-lived tokens in scripts.\n- **Safety controls:** \n  - Feature flag / kill switch with documented operational runbook.\n  - Hard rate limits/timeouts/concurrency limits to prevent load spikes.\n  - Explicit environment scoping (dev/stage/prod) with guardrails preventing accidental cross-env targeting.\n- **Pre-prod validation:** Run in staging with production-like data volume:\n  - Measure CPU/mem/DB/query load impact and p95/p99 latency impact on governance engine.\n  - Verify no policy decision changes vs baseline and no unexpected writes/audit events beyond expected warm-up logs.\n- **Canary rollout plan:** Limited-scope enablement (single region/instance or small percentage) with success metrics and automated rollback criteria.\n- **Observability + audit:** Metrics, logs, and traces for each run (start/end, duration, call counts, error rates); alerts on failures, abnormal duration, or elevated governance latencies; audit trail that distinguishes warm-up from real governance actions.\n- **Idempotency/failure testing:** Evidence from tests that repeated runs are safe; chaos/failure injection (partial failures, timeouts) to confirm no cascading retries and no stuck locks.\n- **Security review for ops-scripts:** Static scanning, dependency review (if applicable), and confirmation scripts cannot execute arbitrary input or shell injection vectors.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   - Hourly cadence could accumulate resource drain if not optimized (CPU/memory spikes in ops-scripts).\n   - Potential for unintended state changes in governance engine during warm-up, even if dogfooding.\n   - Lack of visibility into EVIDENCE_IDS content; assumes benign but unverified.\n   - Dogfooding on live governance surfaces risks feedback loops if warm-up simulates edge cases poorly.\n3) REQUIRED_GATES:\n   - Provide and review full logs/output from EVIDENCE_IDS (20260224T082005Z) confirming zero production impact.\n   - Resource profiling over 24h simulated run (e.g., Prometheus metrics delta pre/post).\n   - Code review of ops-scripts changes for idempotency, error handling, and rollback.\n   - Canary deployment test on staging governance env with hourly loop x3.\n   - Sign-off from ops lead on no SLO violations.\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS:**\n*   **Operational Side Effects:** The term \"warm-up\" is ambiguous. If this script executes state-changing logic (e.g., resetting quotas, testing enforcement actions) rather than just read-only cache priming, it poses a risk of disrupting live governance operations.\n*   **Resource Contention:** Running a governance sweep hourly could introduce latency or locking issues for legitimate production traffic if the engine is under load.\n*   **Log Pollution & Auditability:** High-frequency dogfooding can flood audit logs, making it difficult to distinguish between real governance enforcement events and synthetic warm-up events during a forensic review.\n*   **Alert Fatigue:** If the warm-up script fails or detects \"synthetic\" violations, it must not trigger high-urgency pages to on-call engineers unless the governance engine itself is down.\n*   **Fail-Open/Closed Behavior:** If the warm-up fails, does it degrade the governance engine to a fail-open state (allowing unsafe actions) or fail-closed (blocking all actions)?\n\n3) **REQUIRED_GATES:**\n*   **Idempotency Verification:** Evidence that the script is strictly read-only or idempotent. It must not alter production policy states or user permissions.\n*   **Traffic Segregation:** Proof that \"dogfood\" traffic is tagged with a specific header or user-agent to allow for filtering in audit logs and metrics.\n*   **Resource Impact Analysis:** A load test result showing that running this script during peak hours does not increase P99 latency for the governance engine.\n*   **Failure Mode Testing:** Evidence showing that if the script crashes or times out, it fails silently without impacting the main governance service availability.\n*   **Staging Dry-Run:** Logs from a 24-hour period in the staging environment confirming the script runs hourly without memory leaks or accumulating errors.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**\n*   *Reasoning:* While warming up a governance engine is a standard operational practice to reduce cold-start latency, the `governance` surface is critical infrastructure. We cannot approve an automated, high-frequency script without explicit confirmation that it is read-only and isolated from production state mutation. Please provide the Idempotency Verification and Traffic Segregation plans.",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-e484ebd5",
+      "RCPT-74fa3ed1",
+      "RCPT-e7cc78ef"
+    ]
+  }
+}
