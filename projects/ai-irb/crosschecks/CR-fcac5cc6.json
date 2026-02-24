@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-fcac5cc6",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260224T182003Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: **MEDIUM**\n\n2) CONCERNS:\n- **Governance engine side effects**: “Warm-up” jobs can accidentally execute non-read-only paths (enforcement, writes, remediation) if not explicitly constrained.\n- **Privilege / blast radius**: Governance components often run with elevated permissions; an hourly scheduled run increases exposure to credential misuse or misconfiguration.\n- **Operational load & cost**: Hourly execution may increase CPU/memory/db load, cache churn, and downstream API calls; could impact production SLOs.\n- **Failure mode amplification**: A bad config or bug becomes a recurring incident every hour (alert fatigue, repeated partial actions).\n- **Drift / inconsistent state**: Warm-up might populate caches with stale/incorrect data or mask real performance issues rather than fixing them.\n- **Auditability**: Risk of insufficient logging/traceability for what the job did each run (especially if it touches policy evaluation results).\n- **Change control clarity**: “Dogfood” implies pre-prod validation, but affected surfaces include “governance” broadly—unclear environment boundaries.\n\n3) REQUIRED_GATES:\n- **Explicit safety contract**: Written statement + code/config evidence that warm-up is **read-only** (no enforcement, no writes), or a clear allowlist of permitted actions.\n- **Environment scoping**: Proof it runs only in intended environment(s) (e.g., dogfood/staging) with strong safeguards preventing production execution unless separately approved.\n- **Permissions review**: IAM/service account scoped to minimum required; evidence of least-privilege and secrets handling review.\n- **Load/perf assessment**: Measured impact (CPU/mem/db/qps, downstream API rate) from a representative run; acceptance thresholds defined.\n- **Failure handling**: Retries/backoff, timeouts, concurrency limits, and idempotency; demonstrate it cannot pile up overlapping runs.\n- **Observability**: Structured logs, metrics, tracing, and alerts (success/failure/duration/side effects); dashboards covering trend and anomaly detection.\n- **Canary + rollback**: Canary rollout plan (limited scope/tenants/nodes) and a one-step disable/rollback mechanism for the scheduler/job.\n- **Runbook & oncall readiness**: Documented runbook, ownership, and alert routing; clear escalation and mitigation steps.\n- **Evidence linkage**: Provide what “EVIDENCE_IDS: 20260224T182003Z” contains (diff, config, test results) to substantiate the above.\n\n4) RECOMMENDATION: **REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "approve",
+      "summary": "1) RISK: LOW\n2) CONCERNS:\n   * Minimal resource impact from hourly dogfood runs, but confirm no cumulative overhead on shared infra.\n   * Ensure dogfood payloads are fully isolated from production governance decisions or data.\n   * Potential for false alerts/noise in monitoring if warm-up triggers governance logs.\n3) REQUIRED_GATES:\n   * Review EVIDENCE_IDS:20260224T182003Z for test logs confirming isolation, no prod spillover, and stable warm-up performance.\n   * Run 24-hour canary in staging with resource metrics (CPU/memory) and alert validation.\n   * Post-deploy monitoring gate: auto-revert if >5% resource spike or any prod-adjacent log anomalies in first 48h.\n4) RECOMMENDATION: APPROVE",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Audit Trail Pollution:** The Governance engine is a compliance surface. Injecting hourly synthetic traffic risks corrupting legal/safety audit logs if the data is not rigorously segregated or tagged.\n*   **Unintended Enforcement:** There is a risk that the \"warm-up\" traffic could trigger actual enforcement mechanisms (e.g., rate limiting, IP bans, account suspensions) against internal infrastructure or the script itself, potentially causing an outage.\n*   **Alert Fatigue:** If the warm-up script triggers standard violation alerts, it will desensitize the on-call team to real governance breaches.\n*   **Resource Contention:** Hourly execution must be verified not to consume read/write capacity needed for legitimate production traffic spikes.\n\n3) **REQUIRED_GATES:**\n*   **Synthetic Data Tagging:** Must provide evidence that all logs/events generated by this script contain a distinct metadata field (e.g., `traffic_type: synthetic` or `source: dogfood`) to ensure they can be filtered out of compliance reports.\n*   **Isolation Verification:** Confirmation that the script utilizes a dedicated test tenant or service account with no permissions to affect production user states (e.g., it cannot ban a real user).\n*   **Alert Suppression Plan:** Evidence that alerts generated by this specific traffic source are routed to a low-priority queue or suppressed entirely, rather than paging the safety on-call.\n*   **Staging Burn-in:** Logs showing the script running in the Staging environment for at least 24 hours to verify it does not cause memory leaks or resource locking in the governance service.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES\n\n*Reasoning: While keeping the engine warm is operationally sound, modifying the traffic flow of the Governance surface requires strict proof that the \"fake\" data will not compromise the defensibility of our safety reporting. Approval is withheld until data tagging and isolation are confirmed.*",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Not converged.",
+  "dissent": "Panel did not converge or required provider errored.",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-b13a1761",
+      "RCPT-a5f703d3",
+      "RCPT-192a781b"
+    ]
+  }
+}
