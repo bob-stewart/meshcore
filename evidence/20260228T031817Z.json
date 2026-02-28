@@ -1,0 +1,11 @@
+{
+  "id": "20260228T031817Z",
+  "createdAt": "2026-02-28T03:18:20Z",
+  "summary": "HardShell evidence bundle registered from local path",
+  "pointers": {
+    "type": "local-path",
+    "path": "/data/.openclaw/workspace/Business/EXOCHAIN/dev/hardshell/evidence/20260228T031817Z",
+    "hardshellSha": "unknown",
+    "exochainSha": "unknown"
+  }
+}
