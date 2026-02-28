@@ -1,0 +1,15 @@
+{
+  "id": "RCPT-b928fc15",
+  "createdAt": "2026-02-28T03:19:49Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.2",
+  "latencyMs": 393,
+  "tokensIn": 133,
+  "tokensOut": 742,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel"
+  }
+}
