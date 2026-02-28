@@ -2,24 +2,25 @@
   "schema": "meshcore.irb.improvement.v2",
   "run": {
     "job_id": "",
-    "timestamp_utc": "2026-02-28T18:14:37Z",
+    "timestamp_utc": "2026-02-28T18:20:09Z",
     "commit_range": null,
     "forced": true,
     "irb_force": true,
     "irb_surfaces": [
+      "governance",
       "ops-scripts"
     ],
     "sentinel_version": "v2"
   },
   "links": {
-    "evidence_bundle": "SELF-REVIEW-20260228T181415Z",
-    "case": "IRB-43226777",
-    "findings": "FIND-7837333b",
-    "crosscheck": "CR-a6add788",
+    "evidence_bundle": "20260228T181955Z",
+    "case": "IRB-51d004ae",
+    "findings": "FIND-bb70da98",
+    "crosscheck": "CR-a6a81581",
     "receipts": [
-      "RCPT-56f76d10",
-      "RCPT-7bb624aa",
-      "RCPT-e97fd188"
+      "RCPT-67302cf5",
+      "RCPT-373155d6",
+      "RCPT-06c710ad"
     ]
   },
   "signals": {
@@ -27,7 +28,7 @@
       "provider": "openrouter",
       "success_rate_1h": 1,
       "error_rate_1h": 0,
-      "median_latency_ms": 464
+      "median_latency_ms": 377
     },
     "convergence": {
       "attempts": 1,
@@ -36,7 +37,6 @@
       "common_disagreements": [],
       "dissenters": [],
       "required_gates_aggregate": [
-        "Evidence bundle verified (EVIDENCE_IDS: SELF-REVIEW-20260228T181415Z); confirm/attest whether any code changes were actually deployed in this run; if code changed, require change record + diff/commit reference and rerun warm-up under correct classification",
         "Evidence bundle verified, synthetic tag confirmed"
       ]
     },
@@ -60,7 +60,7 @@
       },
       "evidence": [
         {
-          "ref": "receipts:RCPT-56f76d10",
+          "ref": "receipts:RCPT-67302cf5",
           "note": "All panel members agreed."
         }
       ],
