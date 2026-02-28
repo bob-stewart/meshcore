@@ -1,0 +1,80 @@
+{
+  "schema": "meshcore.irb.improvement.v2",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-02-28T18:14:37Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "ops-scripts"
+    ],
+    "sentinel_version": "v2"
+  },
+  "links": {
+    "evidence_bundle": "SELF-REVIEW-20260228T181415Z",
+    "case": "IRB-43226777",
+    "findings": "FIND-7837333b",
+    "crosscheck": "CR-a6add788",
+    "receipts": [
+      "RCPT-56f76d10",
+      "RCPT-7bb624aa",
+      "RCPT-e97fd188"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 1,
+      "error_rate_1h": 0,
+      "median_latency_ms": 464
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 1,
+      "convergence_mode": "supermajority_2/3",
+      "common_disagreements": [],
+      "dissenters": [],
+      "required_gates_aggregate": [
+        "Evidence bundle verified (EVIDENCE_IDS: SELF-REVIEW-20260228T181415Z); confirm/attest whether any code changes were actually deployed in this run; if code changed, require change record + diff/commit reference and rerun warm-up under correct classification",
+        "Evidence bundle verified, synthetic tag confirmed"
+      ]
+    },
+    "adverse_events": {
+      "count": 0,
+      "events": []
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260228-18-001",
+      "title": "Routine warm-up converged — no action required",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "GREEN",
+      "why_now": "Panel converged cleanly. System operating within expected parameters.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "stable",
+        "confidence": 0.9
+      },
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-56f76d10",
+          "note": "All panel members agreed."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "NO_ACTION_REQUIRED"
+    }
+  ],
+  "routing": {
+    "forums": [],
+    "review_sla_hours": 0
+  }
+}

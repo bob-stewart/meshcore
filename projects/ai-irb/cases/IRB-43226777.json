@@ -1,0 +1,14 @@
+{
+  "id": "IRB-43226777",
+  "createdAt": "2026-02-28T18:14:15Z",
+  "severity": "MEDIUM",
+  "summary": "irb-sentinel v2: (1) concrete warm-up prompt replacing ambiguous governance-engine summary to reduce spurious non-convergence; (2) parsePanel() now extracts structured CONCERNS and REQUIRED_GATES from each model response and stores them in crosscheck + backlog; (3) improvement proposals generated from real panel output instead of TBD placeholder; (4) warm-up runs use 2/3 supermajority convergence threshold instead of unanimity — real gateable changes retain unanimity. No permission changes, no network exposure, no config changes. All changes confined to ops-scripts/irb-sentinel.js.",
+  "status": "IN_REVIEW",
+  "affectedSurfaces": [
+    "ops-scripts"
+  ],
+  "evidenceIds": [
+    "SELF-REVIEW-20260228T181415Z"
+  ],
+  "links": []
+}
