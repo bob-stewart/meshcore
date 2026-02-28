@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.2",
+  "id": "CR-e2e082d2",
+  "created_by": "did:meshcore:irb-sentinel",
+  "question": "Safety and defensibility review",
+  "method": "adversarial",
+  "inputs": [
+    "20260228T081955Z"
+  ],
+  "opinions": [
+    {
+      "agent_id": "did:meshcore:openai/gpt-5.2",
+      "agent_kind": "ai",
+      "agent_label": "openai/gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK: MEDIUM**\n\n2) **CONCERNS**\n- **Governance-impacting surface area**: “governance engine warm-up” could alter or pre-load policy state in ways that affect authorization/controls, even if intended to be read-only.\n- **Ops-script blast radius**: hourly scheduled jobs can silently become high-frequency failure sources (retries, alert storms, cron drift), impacting platform stability.\n- **Idempotency and statefulness**: warm-up routines sometimes mutate caches/indexes/state; if not strictly idempotent, hourly execution can cause drift or accumulation.\n- **Performance/cost regression**: periodic warm-up may increase CPU/memory, DB queries, or external calls; could interfere with peak traffic or increase spend.\n- **Failure-mode ambiguity**: if warm-up fails, unclear whether it blocks governance decisions, triggers fallback behavior, or leaves partially warmed state.\n- **Security/auditability**: scripts may require elevated credentials; risk of secret exposure, misuse, or bypass of standard change controls.\n- **Insufficient evidence context**: only an evidence ID is provided; no details on what “warm-up” does, scope (prod vs staging), or safeguards.\n\n3) **REQUIRED_GATES**\n- **Design/behavior spec**: explicit statement of what the warm-up does (read-only vs mutating), resources touched (DBs/services), and expected runtime/limits.\n- **Idempotency proof/test**: automated test demonstrating repeated runs produce identical state (or explicitly bounded/garbage-collected state changes).\n- **Least-privilege review**: credential and permission audit for the ops script (no broad admin tokens); secrets handling validated.\n- **Failure handling & rollback plan**: documented behavior on failure (no impact to governance decisions), retry policy, and a one-step disable/rollback mechanism.\n- **Canary + staged rollout**: deploy first in non-prod, then limited prod scope (single region/tenant) with monitored success criteria.\n- **SLO/metric gates**: dashboards/alerts for runtime, error rate, downstream call volume, DB load, cache hit/miss, and governance decision latency.\n- **Load/perf test evidence**: demonstrate no measurable regression under expected hourly execution and worst-case concurrency (including overlapping runs).\n- **Concurrency control**: ensure single-flight execution (lock/lease) to prevent overlapping hourly runs.\n- **Audit logging**: run logs with correlation IDs, actor identity, and immutable audit trail for governance-related interactions.\n\n4) **RECOMMENDATION: REQUEST_CHANGES**",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:x-ai/grok-4.1-fast",
+      "agent_kind": "ai",
+      "agent_label": "x-ai/grok-4.1-fast",
+      "model": "x-ai/grok-4.1-fast",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) RISK: LOW  \n2) CONCERNS:  \n   - Potential for minor resource drain from hourly automated runs (CPU/memory on ops-scripts/governance surfaces).  \n   - Unintended interactions if dogfood inputs inadvertently propagate to non-dogfood governance paths.  \n   - Lack of explicit confirmation that dogfood is fully isolated from production governance enforcement.  \n\n3) REQUIRED_GATES:  \n   - Review EVIDENCE_IDS (20260228T081955Z) for logs confirming successful warm-up runs, no errors, and zero prod leakage.  \n   - Resource monitoring test: Run 24-hour simulation in staging/dogfood env and measure CPU/mem/IO impact (<5% overhead threshold).  \n   - Isolation audit: Static code review of ops-scripts changes to verify dogfood-only execution paths (no prod triggers).  \n\n4) RECOMMENDATION: REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    },
+    {
+      "agent_id": "did:meshcore:google/gemini-3-pro-preview",
+      "agent_kind": "ai",
+      "agent_label": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview",
+      "policy_id": "ai-irb-v0",
+      "stance": "request_changes",
+      "summary": "1) **RISK:** MEDIUM\n\n2) **CONCERNS:**\n*   **Audit Trail Pollution:** Synthetic \"warm-up\" traffic interacting with the governance engine risks corrupting safety logs and compliance metrics if not strictly segregated from production traffic.\n*   **Latency Injection:** The governance engine is a critical path for system safety. An hourly script could introduce resource contention or locking, potentially slowing down real-time safety checks for actual users.\n*   **Privilege Escalation:** Ops scripts interacting with governance layers often require elevated permissions. There is a risk of credential leakage or the script being used as a vector to bypass policy if not properly scoped.\n*   **State Mutation:** It is unclear if the \"warm-up\" is read-only. If the script writes data to keep the cache hot, there is a risk of corrupting the governance state or policy configurations.\n\n3) **REQUIRED_GATES:**\n*   **Traffic Tagging Verification:** Evidence that all requests generated by this script contain specific headers/metadata allowing them to be filtered out of safety audits and performance metrics.\n*   **Non-Interference Test:** Load testing results demonstrating that the script execution does not increase latency for concurrent legitimate governance requests (P99 latency check).\n*   **Least-Privilege Review:** Confirmation that the script utilizes a service account with the minimum necessary permissions (ideally read-only) and does not possess administrative override capabilities.\n*   **Fail-Safe Confirmation:** Documentation showing that if the script hangs or crashes, it does not block or lock the governance engine.\n\n4) **RECOMMENDATION:** REQUEST_CHANGES",
+      "confidence": 0.5,
+      "risks": []
+    }
+  ],
+  "synthesis": "Converged.",
+  "dissent": "",
+  "dissenters": [],
+  "metadata": {
+    "receipts": [
+      "RCPT-beef7bc5",
+      "RCPT-4c39d298",
+      "RCPT-55d05d4e"
+    ]
+  }
+}
