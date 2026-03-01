@@ -1,0 +1,80 @@
+{
+  "schema": "meshcore.irb.improvement.v2",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-03-01T23:20:11Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ],
+    "sentinel_version": "v2"
+  },
+  "links": {
+    "evidence_bundle": "20260301T231955Z",
+    "case": "IRB-18e8cf4f",
+    "findings": "FIND-b4e1968c",
+    "crosscheck": "CR-ea7834dc",
+    "receipts": [
+      "RCPT-7e822e40",
+      "RCPT-02689790",
+      "RCPT-e9b8952a"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 1,
+      "error_rate_1h": 0,
+      "median_latency_ms": 450
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 1,
+      "convergence_mode": "supermajority_2/3",
+      "common_disagreements": [],
+      "dissenters": [],
+      "required_gates_aggregate": [
+        "Evidence bundle verified, synthetic tag confirmed"
+      ]
+    },
+    "adverse_events": {
+      "count": 0,
+      "events": []
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260301-23-001",
+      "title": "Routine warm-up converged — no action required",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "GREEN",
+      "why_now": "Panel converged cleanly. System operating within expected parameters.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "stable",
+        "confidence": 0.9
+      },
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-7e822e40",
+          "note": "All panel members agreed."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "NO_ACTION_REQUIRED"
+    }
+  ],
+  "routing": {
+    "forums": [],
+    "review_sla_hours": 0
+  }
+}
