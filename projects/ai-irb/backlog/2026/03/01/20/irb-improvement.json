@@ -2,7 +2,7 @@
   "schema": "meshcore.irb.improvement.v2",
   "run": {
     "job_id": "",
-    "timestamp_utc": "2026-03-01T20:03:31Z",
+    "timestamp_utc": "2026-03-01T20:20:09Z",
     "commit_range": null,
     "forced": true,
     "irb_force": true,
@@ -13,14 +13,14 @@
     "sentinel_version": "v2"
   },
   "links": {
-    "evidence_bundle": "20260301T200315Z",
-    "case": "IRB-c1029346",
-    "findings": "FIND-73afdf6a",
-    "crosscheck": "CR-07a924d3",
+    "evidence_bundle": "20260301T201955Z",
+    "case": "IRB-5ecd7d76",
+    "findings": "FIND-668361c8",
+    "crosscheck": "CR-dc381957",
     "receipts": [
-      "RCPT-508ff249",
-      "RCPT-929f5363",
-      "RCPT-37a5b7eb"
+      "RCPT-55bfc7de",
+      "RCPT-6a1186b2",
+      "RCPT-ae3d9d23"
     ]
   },
   "signals": {
@@ -28,7 +28,7 @@
       "provider": "openrouter",
       "success_rate_1h": 1,
       "error_rate_1h": 0,
-      "median_latency_ms": 549
+      "median_latency_ms": 573
     },
     "convergence": {
       "attempts": 1,
@@ -60,7 +60,7 @@
       },
       "evidence": [
         {
-          "ref": "receipts:RCPT-508ff249",
+          "ref": "receipts:RCPT-55bfc7de",
           "note": "All panel members agreed."
         }
       ],
