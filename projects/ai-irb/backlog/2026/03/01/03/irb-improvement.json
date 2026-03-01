@@ -1,0 +1,131 @@
+{
+  "schema": "meshcore.irb.improvement.v2",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-03-01T03:21:23Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ],
+    "sentinel_version": "v2"
+  },
+  "links": {
+    "evidence_bundle": "20260301T031955Z",
+    "case": "IRB-9f2ed287",
+    "findings": "FIND-c2d146fb",
+    "crosscheck": "CR-2057ea24",
+    "receipts": [
+      "RCPT-79187937",
+      "RCPT-5b4665c1",
+      "RCPT-d14651e6",
+      "RCPT-9a15a420"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 0.75,
+      "error_rate_1h": 0.25,
+      "median_latency_ms": 3271
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 0,
+      "convergence_mode": "supermajority_2/3",
+      "common_disagreements": [],
+      "dissenters": [
+        "anthropic/claude-opus-4-6"
+      ],
+      "required_gates_aggregate": [
+        "Evidence bundle verified, synthetic tag confirmed"
+      ]
+    },
+    "adverse_events": {
+      "count": 1,
+      "events": [
+        {
+          "model": "anthropic/claude-opus-4-6",
+          "error": "This operation was aborted"
+        }
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260301-03-001",
+      "title": "Non-convergence: address panel disagreements before next gateable change",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "YELLOW",
+      "why_now": "Panel did not converge. Top shared concern: \"Panel disagreement captured — see crosscheck for details\". Review and address before next real gateable change.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "up",
+        "confidence": 0.7
+      },
+      "panel_summary": [
+        {
+          "model": "openai/gpt-5.2",
+          "stance": "APPROVE",
+          "top_concern": "",
+          "top_gate": "Evidence bundle verified, synthetic tag confirmed"
+        },
+        {
+          "model": "anthropic/claude-opus-4-6",
+          "stance": "REQUEST_CHANGES",
+          "top_concern": "",
+          "top_gate": ""
+        },
+        {
+          "model": "x-ai/grok-4.1-fast",
+          "stance": "APPROVE",
+          "top_concern": "",
+          "top_gate": "Evidence bundle verified, synthetic tag confirmed"
+        },
+        {
+          "model": "google/gemini-3-pro-preview",
+          "stance": "APPROVE",
+          "top_concern": "",
+          "top_gate": "Evidence bundle verified, synthetic tag confirmed"
+        }
+      ],
+      "required_gates_aggregate": [
+        "Evidence bundle verified, synthetic tag confirmed"
+      ],
+      "common_disagreements": [],
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-79187937",
+          "note": "See full crosscheck for per-model opinions."
+        },
+        {
+          "ref": "evidence:20260301T031955Z",
+          "note": "Evidence bundle for this run."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "QUEUE_FOR_REVIEW"
+    }
+  ],
+  "routing": {
+    "forums": [
+      {
+        "name": "Advantage Forum",
+        "reason": "learning loop consistency"
+      },
+      {
+        "name": "Ethics Forum",
+        "reason": "severity/escalation semantics"
+      }
+    ],
+    "review_sla_hours": 72
+  }
+}
