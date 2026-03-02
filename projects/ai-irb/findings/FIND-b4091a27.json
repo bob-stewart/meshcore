@@ -1,0 +1,11 @@
+{
+  "id": "FIND-b4091a27",
+  "caseId": "IRB-f94bfcab",
+  "createdAt": "2026-03-02T00:20:20Z",
+  "crosscheckReportId": "CR-5e97f6f9",
+  "converged": true,
+  "summary": "Converged",
+  "dissent": "",
+  "common_disagreements": [],
+  "recommendation": "Proceed with gates satisfied"
+}
