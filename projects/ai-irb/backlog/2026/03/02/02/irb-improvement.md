@@ -1,10 +1,10 @@
-# IRB Improvement Backlog — 2026-03-02T02:20:10Z
+# IRB Improvement Backlog — 2026-03-02T02:20:29Z
 **Sentinel:** v2 | **Mode:** warm-up (supermajority)
 
 ## Run
 - Forced: yes
 - Surfaces: governance, ops-scripts
-- Evidence: 20260302T021956Z
+- Evidence: 20260302T022016Z
 - Converged: ✅ yes
 - Adverse events: 0
 
@@ -14,7 +14,7 @@
 - **google/gemini-3-pro-preview**: APPROVE | Top concern: none
 
 ## Key Signals
-- Provider: success 100% | p50 latency 391ms
+- Provider: success 100% | p50 latency 433ms
 - Convergence: 100% (mode: supermajority 2/3)
 - Top shared concern: none
 - Required gates aggregate: Evidence bundle verified, synthetic tag confirmed
