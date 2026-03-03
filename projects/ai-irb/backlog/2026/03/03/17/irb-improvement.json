@@ -1,0 +1,124 @@
+{
+  "schema": "meshcore.irb.improvement.v2",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-03-03T17:21:11Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ],
+    "sentinel_version": "v2"
+  },
+  "links": {
+    "evidence_bundle": "20260303T172102Z",
+    "case": "IRB-0fc17377",
+    "findings": "FIND-89424bdc",
+    "crosscheck": "CR-68ae6889",
+    "receipts": [
+      "RCPT-76fd0b2e",
+      "RCPT-4e4ba963",
+      "RCPT-72b4c494"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 0.6666666666666666,
+      "error_rate_1h": 0.3333333333333333,
+      "median_latency_ms": 445
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 0,
+      "convergence_mode": "supermajority_2/3",
+      "common_disagreements": [],
+      "dissenters": [
+        "google/gemini-3-pro-preview"
+      ],
+      "required_gates_aggregate": [
+        "Evidence bundle verified, synthetic tag confirmed"
+      ]
+    },
+    "adverse_events": {
+      "count": 1,
+      "events": [
+        {
+          "model": "google/gemini-3-pro-preview",
+          "error": "http=404 body={\"error\":{\"message\":\"No allowed providers are available for the selected model.\",\"code\":404,\"metadata\":{\"available_providers\":[\"google-ai-studio\",\"google-vertex\"],\"requested_providers\":[\"xai\",\"azure\",\"openai\",\"anthropic\",\"perplexity\",\"amazon-bedrock\"]}}}"
+        }
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260303-17-001",
+      "title": "Non-convergence: address panel disagreements before next gateable change",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "YELLOW",
+      "why_now": "Panel did not converge. Top shared concern: \"Panel disagreement captured — see crosscheck for details\". Review and address before next real gateable change.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "up",
+        "confidence": 0.7
+      },
+      "panel_summary": [
+        {
+          "model": "openai/gpt-5.2",
+          "stance": "APPROVE",
+          "top_concern": "",
+          "top_gate": "Evidence bundle verified, synthetic tag confirmed"
+        },
+        {
+          "model": "x-ai/grok-4.1-fast",
+          "stance": "APPROVE",
+          "top_concern": "",
+          "top_gate": "Evidence bundle verified, synthetic tag confirmed"
+        },
+        {
+          "model": "google/gemini-3-pro-preview",
+          "stance": "REQUEST_CHANGES",
+          "top_concern": "",
+          "top_gate": ""
+        }
+      ],
+      "required_gates_aggregate": [
+        "Evidence bundle verified, synthetic tag confirmed"
+      ],
+      "common_disagreements": [],
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-76fd0b2e",
+          "note": "See full crosscheck for per-model opinions."
+        },
+        {
+          "ref": "evidence:20260303T172102Z",
+          "note": "Evidence bundle for this run."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "QUEUE_FOR_REVIEW"
+    }
+  ],
+  "routing": {
+    "forums": [
+      {
+        "name": "Advantage Forum",
+        "reason": "learning loop consistency"
+      },
+      {
+        "name": "Ethics Forum",
+        "reason": "severity/escalation semantics"
+      }
+    ],
+    "review_sla_hours": 72
+  }
+}
