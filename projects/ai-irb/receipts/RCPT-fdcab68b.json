@@ -1,0 +1,16 @@
+{
+  "id": "RCPT-fdcab68b",
+  "createdAt": "2026-03-03T23:21:15Z",
+  "kind": "llm-call",
+  "provider": "gemini-direct",
+  "model": "google/gemini-3-pro-preview",
+  "latencyMs": 6023,
+  "tokensIn": 256,
+  "tokensOut": 41,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel",
+    "warmup": true
+  }
+}
