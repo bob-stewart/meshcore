@@ -1,0 +1,15 @@
+{
+  "id": "IRB-efb33252",
+  "createdAt": "2026-03-06T12:20:02Z",
+  "severity": "MEDIUM",
+  "summary": "Hourly dogfood: governance engine warm-up",
+  "status": "IN_REVIEW",
+  "affectedSurfaces": [
+    "ops-scripts",
+    "governance"
+  ],
+  "evidenceIds": [
+    "20260306T122000Z"
+  ],
+  "links": []
+}
