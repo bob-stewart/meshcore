@@ -1,0 +1,16 @@
+{
+  "id": "RCPT-d80d60ca",
+  "createdAt": "2026-03-06T23:23:31Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "x-ai/grok-4.1-fast",
+  "latencyMs": 394,
+  "tokensIn": 384,
+  "tokensOut": 306,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel",
+    "warmup": true
+  }
+}
