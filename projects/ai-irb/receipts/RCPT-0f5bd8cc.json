@@ -1,0 +1,16 @@
+{
+  "id": "RCPT-0f5bd8cc",
+  "createdAt": "2026-03-09T10:20:08Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "x-ai/grok-4.1-fast",
+  "latencyMs": 340,
+  "tokensIn": 384,
+  "tokensOut": 302,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel",
+    "warmup": true
+  }
+}
