@@ -1,0 +1,85 @@
+{
+  "schema": "meshcore.irb.improvement.v2",
+  "run": {
+    "job_id": "",
+    "timestamp_utc": "2026-03-10T22:40:57Z",
+    "commit_range": null,
+    "forced": true,
+    "irb_force": true,
+    "irb_surfaces": [
+      "governance",
+      "ops-scripts"
+    ],
+    "sentinel_version": "v2"
+  },
+  "links": {
+    "evidence_bundle": "20260310T224050Z",
+    "case": "IRB-e7bcc09d",
+    "findings": "FIND-7b080a7c",
+    "crosscheck": "CR-a2985f7d",
+    "receipts": [
+      "RCPT-97e4b69c",
+      "RCPT-8f8b08c6",
+      "RCPT-ef810def"
+    ]
+  },
+  "signals": {
+    "provider_reliability": {
+      "provider": "openrouter",
+      "success_rate_1h": 0.6666666666666666,
+      "error_rate_1h": 0.3333333333333333,
+      "median_latency_ms": 316
+    },
+    "convergence": {
+      "attempts": 1,
+      "pass_rate": 1,
+      "convergence_mode": "supermajority_2/3",
+      "common_disagreements": [],
+      "dissenters": [],
+      "required_gates_aggregate": [
+        "Evidence bundle verified, synthetic tag confirmed"
+      ]
+    },
+    "adverse_events": {
+      "count": 1,
+      "events": [
+        {
+          "model": "google/gemini-3-pro-preview",
+          "error": "http=404 body={\"error\":{\"message\":\"No allowed providers are available for the selected model.\",\"code\":404,\"metadata\":{\"available_providers\":[\"google-vertex\"],\"requested_providers\":[\"xai\",\"azure\",\"openai\",\"anthropic\",\"perplexity\",\"amazon-bedrock\"]}}}"
+        }
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "id": "IRB-PROP-20260310-22-001",
+      "title": "Routine warm-up converged — no action required",
+      "holon": "Moats: Data & Learning Loops",
+      "surface": "irb-sentinel",
+      "risk": "GREEN",
+      "why_now": "Panel converged cleanly. System operating within expected parameters.",
+      "expected_impact": {
+        "metric": "convergence.pass_rate",
+        "direction": "stable",
+        "confidence": 0.9
+      },
+      "evidence": [
+        {
+          "ref": "receipts:RCPT-97e4b69c",
+          "note": "All panel members agreed."
+        }
+      ],
+      "guardrails": [
+        "No permissions/allowlists changes",
+        "No network exposure changes",
+        "No destructive ops",
+        "No escalation routing changes"
+      ],
+      "next_action": "NO_ACTION_REQUIRED"
+    }
+  ],
+  "routing": {
+    "forums": [],
+    "review_sla_hours": 0
+  }
+}
