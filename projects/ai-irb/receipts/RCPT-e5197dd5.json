@@ -1,0 +1,16 @@
+{
+  "id": "RCPT-e5197dd5",
+  "createdAt": "2026-03-10T19:30:05Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "google/gemini-3-pro-preview",
+  "latencyMs": 26,
+  "tokensIn": 0,
+  "tokensOut": 0,
+  "status": "ERROR",
+  "error": "http=404 body={\"error\":{\"message\":\"No allowed providers are available for the selected model.\",\"code\":404,\"metadata\":{\"available_providers\":[\"google-vertex\"],\"requested_providers\":[\"xai\",\"azure\",\"openai\",\"anthropic\",\"perplexity\",\"amazon-bedrock\"]}}}",
+  "metadata": {
+    "purpose": "ai-irb-panel",
+    "warmup": true
+  }
+}
