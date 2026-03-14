@@ -1,0 +1,16 @@
+{
+  "id": "RCPT-b915ce3d",
+  "createdAt": "2026-03-14T02:24:02Z",
+  "kind": "llm-call",
+  "provider": "openrouter",
+  "model": "x-ai/grok-4.1-fast",
+  "latencyMs": 428,
+  "tokensIn": 384,
+  "tokensOut": 289,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel",
+    "warmup": true
+  }
+}
