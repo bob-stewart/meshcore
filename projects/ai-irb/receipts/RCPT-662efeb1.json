@@ -1,0 +1,16 @@
+{
+  "id": "RCPT-662efeb1",
+  "createdAt": "2026-03-17T09:09:16Z",
+  "kind": "llm-call",
+  "provider": "gemini-direct",
+  "model": "google/gemini-3-pro-preview",
+  "latencyMs": 7852,
+  "tokensIn": 256,
+  "tokensOut": 40,
+  "status": "OK",
+  "error": "",
+  "metadata": {
+    "purpose": "ai-irb-panel",
+    "warmup": true
+  }
+}
